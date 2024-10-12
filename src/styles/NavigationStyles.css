@@ -1,4 +1,7 @@
 nav {
+    display: flex;
+    justify-content: space-between; 
+    align-items: center;
     background-color: #282c34;
     padding: 1rem;
   }
@@ -9,13 +12,15 @@ nav {
     gap: 1rem;
   }
   
-  li {
-    color: white;
-  }
-  
-  a {
+  .nav-links li a {
     color: white;
     text-decoration: none;
+  }
+  
+  .auth-links li a {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
   }
   
   a:hover {
