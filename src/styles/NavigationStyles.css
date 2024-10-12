@@ -1,0 +1,24 @@
+nav {
+    background-color: #282c34;
+    padding: 1rem;
+  }
+  
+  ul {
+    list-style: none;
+    display: flex;
+    gap: 1rem;
+  }
+  
+  li {
+    color: white;
+  }
+  
+  a {
+    color: white;
+    text-decoration: none;
+  }
+  
+  a:hover {
+    text-decoration: underline;
+  }
+  
