@@ -19,14 +19,12 @@ const Login = () => {
       });
 
       console.log('Inloggad:', response.data);
-      navigate('/home'); 
+      navigate('/hem'); 
       setUsername('');
       setPassword('');
     } catch (err) {
-      // Typa err som AxiosError
       const errorResponse = (err as AxiosError).response;
 
-      // Kontrollera om errorResponse.data är en sträng
       const errorMessage = typeof errorResponse?.data === 'string'
         ? errorResponse.data
         : 'Felaktigt användarnamn eller lösenord.';

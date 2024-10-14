@@ -20,6 +20,25 @@ app.get('/users', (req, res) => {
   });
 });
 
+app.post('/register', (req, res) => {
+    const { username, password } = req.body;
+  
+    // Hasha lösenordet INNAN de sparas
+    bcrypt.hash(password, 10, (err, hash) => {
+      if (err) {
+        return res.status(500).send('Server error.');
+      }
+  
+      // sparar användaren i databasen
+      connection.query('INSERT INTO users (username, password) VALUES (?, ?)', [username, hash], (err, results) => {
+        if (err) {
+          return res.status(500).send('Kunde inte skapa användare.');
+        }
+        res.status(201).json({ message: 'Användare skapad!', userId: results.insertId });
+      });
+    });
+  });
+  
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
 
