@@ -37,10 +37,10 @@ app.post('/register', async (req, res) => {
 });
 
   
+// Route för inloggning
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
 
-  //hämtar användaren från databasen
   connection.query('SELECT * FROM users WHERE username = ?', [username], (err, results) => {
     if (err) {
       return res.status(500).send('Server error.');
@@ -52,16 +52,17 @@ app.post('/login', (req, res) => {
 
     const user = results[0];
 
-    // jämför hash
     bcrypt.compare(password, user.password, (err, match) => {
       if (err || !match) {
         return res.status(401).send('Felaktigt användarnamn eller lösenord.');
       }
 
-      res.json({ message: 'Inloggning lyckades!', userId: user.id });
+      
+      res.json({ message: 'Inloggning lyckades!', userId: user.id, role: user.role }); 
     });
   });
 });
+
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);

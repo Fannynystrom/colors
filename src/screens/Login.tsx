@@ -13,35 +13,33 @@ const Login = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-
+  
     try {
       const response = await axios.post('http://localhost:3001/login', {
         username,
         password,
       });
-
+  
       console.log('Inloggad:', response.data);
       
       if (authContext) {
-        authContext.login(); 
+        authContext.login(response.data.role); // skickar roll till login-funktionen
       }
-
+  
       navigate('/'); 
       setUsername('');
       setPassword('');
     } catch (err) {
-      // Typa err som AxiosError
       const errorResponse = (err as AxiosError).response;
-
       const errorMessage = typeof errorResponse?.data === 'string'
         ? errorResponse.data
         : 'Felaktigt användarnamn eller lösenord.';
-
+  
       setError(errorMessage);
       console.error('Inloggning misslyckades:', err);
     }
   };
-
+  
   return (
     <div className="login-container">
       <h2>Logga in</h2>

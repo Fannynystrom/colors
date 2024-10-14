@@ -10,7 +10,7 @@ function Navigation() {
     return null; 
   }
 
-  const { isAuthenticated, logout } = authContext;
+  const { isAuthenticated, role, logout } = authContext;
 
   return (
     <nav>
@@ -21,6 +21,11 @@ function Navigation() {
         <li>
           <Link to="/about">About</Link>
         </li>
+        {isAuthenticated && role === 'admin' && ( // visar Admin-länk om inloggad som admin
+          <li>
+            <Link to="/admin">Admin</Link>
+          </li>
+        )}
       </ul>
       <ul className="auth-links">
         <li>
