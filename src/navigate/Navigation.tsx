@@ -14,23 +14,25 @@ function Navigation() {
 
   return (
     <nav>
-      <ul className="nav-links">
-        <li>
-          <Link to="/">Hem</Link>
-        </li>
-        <li>
-          <Link to="/about">About</Link>
-        </li>
-        {isAuthenticated && role === 'admin' && ( // visar Admin-länk om inloggad som admin
+      {isAuthenticated && ( // visar endast navigering ifall du e inloggad
+        <ul className="nav-links">
           <li>
-            <Link to="/admin">Admin</Link>
+            <Link to="/">Hem</Link>
           </li>
-        )}
-      </ul>
+          <li>
+            <Link to="/about">About</Link>
+          </li>
+          {role === 'admin' && ( // Admin-länk om man e inloggad som admin
+            <li>
+              <Link to="/admin">Admin</Link>
+            </li>
+          )}
+        </ul>
+      )}
       <ul className="auth-links">
         <li>
           {isAuthenticated ? (
-            <Link to="/login" onClick={logout}>Logga ut</Link>
+            <Link to="/" onClick={logout}>Logga ut</Link>
           ) : (
             <Link to="/login">Logga in</Link>
           )}

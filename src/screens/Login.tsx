@@ -26,7 +26,7 @@ const Login = () => {
         authContext.login(response.data.role); // skickar roll till login-funktionen
       }
   
-      navigate('/'); 
+      navigate('/about'); 
       setUsername('');
       setPassword('');
     } catch (err) {
