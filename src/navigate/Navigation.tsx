@@ -1,8 +1,17 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
 import '../styles/NavigationStyles.css';
+import { AuthContext } from '../context/AuthContext';
 
 function Navigation() {
+  const authContext = useContext(AuthContext);
+
+  if (!authContext) {
+    return null; 
+  }
+
+  const { isAuthenticated, logout } = authContext;
+
   return (
     <nav>
       <ul className="nav-links">
@@ -15,7 +24,11 @@ function Navigation() {
       </ul>
       <ul className="auth-links">
         <li>
-          <Link to="/login">Log out/Login</Link>
+          {isAuthenticated ? (
+            <Link to="/login" onClick={logout}>Logga ut</Link>
+          ) : (
+            <Link to="/login">Logga in</Link>
+          )}
         </li>
       </ul>
     </nav>

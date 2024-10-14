@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import axios, { AxiosError } from 'axios';
 import { useNavigate } from 'react-router-dom';
 import '../styles/LoginStyles.css'; 
+import { AuthContext } from '../context/AuthContext'; 
 
 const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const authContext = useContext(AuthContext); 
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,10 +21,16 @@ const Login = () => {
       });
 
       console.log('Inloggad:', response.data);
-      navigate('/hem'); 
+      
+      if (authContext) {
+        authContext.login(); 
+      }
+
+      navigate('/'); 
       setUsername('');
       setPassword('');
     } catch (err) {
+      // Typa err som AxiosError
       const errorResponse = (err as AxiosError).response;
 
       const errorMessage = typeof errorResponse?.data === 'string'
@@ -60,7 +68,7 @@ const Login = () => {
         </div>
         <button type="submit">Logga in</button>
       </form>
-      {error && <p className="error">{error}</p>}
+      {error && <p className="error">{error}</p>} 
       <p>
         Vill du registrera dig? <a href="/register">Klicka här</a>
       </p>

@@ -6,7 +6,7 @@ const Register = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const navigate = useNavigate(); // Initialisera navigate
+  const navigate = useNavigate(); 
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
