@@ -1,4 +1,3 @@
-// db.js
 import mysql from 'mysql2';
 import dotenv from 'dotenv'; 
 
@@ -11,12 +10,13 @@ const connection = mysql.createConnection({
   database: process.env.DB_NAME
 });
 
+// kontrollera anslutningen
 connection.connect((err) => {
   if (err) {
     console.error('Error connecting to MySQL: ', err);
     return;
   }
-  console.log('Connected to MySQL database!');
+  console.log('Connected to MySQL database!'); 
 });
 
 export default connection;
