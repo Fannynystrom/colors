@@ -5,6 +5,7 @@ import About from './screens/About';
 import Login from './screens/Login';
 import Navigation from './navigate/Navigation';
 import Register from './screens/Register';
+import Admin from './screens/Admin'; 
 import { AuthContext } from './context/AuthContext';
 
 function AppRouter() {
@@ -19,6 +20,9 @@ function AppRouter() {
         <Route path="/about" element={<About />} />
         <Route path="/login" element={<Login />} /> 
         <Route path="/register" element={<Register />} />
+        {isAuthenticated && ( // admin visas endast om du e admin
+          <Route path="/admin" element={<Admin />} />
+        )}
       </Routes>
     </Router>
   );
