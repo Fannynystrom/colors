@@ -17,7 +17,7 @@ function Navigation() {
       {isAuthenticated && ( // visar endast navigering ifall du e inloggad
         <ul className="nav-links">
           <li>
-            <Link to="/">Hem</Link>
+            <Link to="/home">Hem</Link>
           </li>
           <li>
             <Link to="/about">About</Link>
