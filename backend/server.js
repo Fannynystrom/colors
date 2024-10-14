@@ -20,24 +20,22 @@ app.get('/users', (req, res) => {
   });
 });
 
-app.post('/register', (req, res) => {
-    const { username, password } = req.body;
-  
-    // Hasha lösenordet INNAN de sparas
-    bcrypt.hash(password, 10, (err, hash) => {
-      if (err) {
-        return res.status(500).send('Server error.');
-      }
-  
-      // sparar användaren i databasen
-      connection.query('INSERT INTO users (username, password) VALUES (?, ?)', [username, hash], (err, results) => {
-        if (err) {
-          return res.status(500).send('Kunde inte skapa användare.');
-        }
-        res.status(201).json({ message: 'Användare skapad!', userId: results.insertId });
-      });
-    });
+app.post('/register', async (req, res) => {
+  const { username, password } = req.body;
+
+  // hashar lösenordet INNAN de sparas
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  // alla användare som skapas blir users
+  connection.query('INSERT INTO users (username, password, role) VALUES (?, ?, ?)', [username, hashedPassword, 'user'], (err, results) => {
+    if (err) {
+      return res.status(500).send('Registrering misslyckades.');
+    }
+
+    res.status(201).send('Användare skapad!');
   });
+});
+
   
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
