@@ -6,6 +6,7 @@ import Login from './screens/Login';
 import Navigation from './navigate/Navigation';
 import Register from './screens/Register';
 import Admin from './screens/Admin';
+import Store from './screens/Store'; 
 import { AuthContext } from './context/AuthContext';
 
 function AppRouter() {
@@ -18,6 +19,7 @@ function AppRouter() {
       <Routes>
         <Route path="/" element={<Login />} /> 
         <Route path="/home" element={<Hem />} /> 
+        <Route path="/store" element={<Store />} /> 
         <Route path="/about" element={<About />} />
         <Route path="/register" element={<Register />} />
         <Route path="/admin" element={<Admin />} />

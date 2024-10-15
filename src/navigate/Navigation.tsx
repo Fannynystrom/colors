@@ -14,15 +14,18 @@ function Navigation() {
 
   return (
     <nav>
-      {isAuthenticated && ( // visar endast navigering ifall du e inloggad
+      {isAuthenticated && ( // visar endast navigering ifall du är inloggad
         <ul className="nav-links">
           <li>
             <Link to="/home">Hem</Link>
           </li>
           <li>
+            <Link to="/store">Butik</Link> 
+          </li>
+          <li>
             <Link to="/about">About</Link>
           </li>
-          {role === 'admin' && ( // Admin-länk om man e inloggad som admin
+          {role === 'admin' && ( //  om man är inloggad som admin
             <li>
               <Link to="/admin">Admin</Link>
             </li>
@@ -41,5 +44,6 @@ function Navigation() {
     </nav>
   );
 }
+
 
 export default Navigation;
