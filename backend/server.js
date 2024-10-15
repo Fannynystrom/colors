@@ -72,17 +72,20 @@ app.get('/products', (req, res) => {
 });
 
 // skapa en ny produkt
-app.post('/products', (req, res) => {
+app.post('/products', async (req, res) => {
   const { name, description, price } = req.body;
 
-  connection.query('INSERT INTO products (name, description, price) VALUES (?, ?, ?)', 
-    [name, description, price], (err, results) => {
-      if (err) {
-        return res.status(500).send('Fel vid skapande av produkt.');
-      }
-      res.status(201).send('Produkt skapad!');
-  });
+  try {
+    await connection.promise().query('INSERT INTO products (name, description, price) VALUES (?, ?, ?)', 
+      [name, description, price]);
+    // Skicka ett JSON-objekt som svar
+    res.status(201).json({ message: 'Produkt skapad!' });
+  } catch (err) {
+    console.error('Error creating product:', err);
+    res.status(500).json({ error: 'Fel vid skapande av produkt.' });
+  }
 });
+
 
 
 
