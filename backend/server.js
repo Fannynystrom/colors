@@ -63,6 +63,28 @@ app.post('/login', (req, res) => {
   });
 });
 
+// hämta alla produkter
+app.get('/products', (req, res) => {
+  connection.query('SELECT id, name, description, price FROM products', (err, results) => {
+    if (err) throw err;
+    res.json(results);
+  });
+});
+
+// skapa en ny produkt
+app.post('/products', (req, res) => {
+  const { name, description, price } = req.body;
+
+  connection.query('INSERT INTO products (name, description, price) VALUES (?, ?, ?)', 
+    [name, description, price], (err, results) => {
+      if (err) {
+        return res.status(500).send('Fel vid skapande av produkt.');
+      }
+      res.status(201).send('Produkt skapad!');
+  });
+});
+
+
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
