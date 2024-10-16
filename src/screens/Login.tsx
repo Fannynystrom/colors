@@ -21,12 +21,13 @@ const Login = () => {
       });
   
       console.log('Inloggad:', response.data);
-      
+  
       if (authContext) {
-        authContext.login(response.data.role); // skickar roll till login-funktionen
+        // skickar roll och userid
+        authContext.login(response.data.userId, response.data.role); 
       }
   
-      navigate('/about'); 
+      navigate('/about');
       setUsername('');
       setPassword('');
     } catch (err) {
@@ -39,6 +40,7 @@ const Login = () => {
       console.error('Inloggning misslyckades:', err);
     }
   };
+  
   
   return (
     <div className="login-container">

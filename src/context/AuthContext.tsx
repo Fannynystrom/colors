@@ -1,26 +1,37 @@
-import React, { createContext, useState, ReactNode } from 'react';
+import React, { createContext, useState, useEffect } from 'react';
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  role: string | null; 
-  login: (role: string) => void; // tar emot roll vid inloggning
+  role: string;
+  login: (userId: number, userRole: string) => void;
   logout: () => void;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [role, setRole] = useState<string | null>(null); // state för roll
+  const [role, setRole] = useState<string>('');
 
-  const login = (userRole: string) => {
+  useEffect(() => {
+    const storedUser = sessionStorage.getItem('user'); 
+    if (storedUser) {
+      const user = JSON.parse(storedUser);
+      setIsAuthenticated(true);
+      setRole(user.role);
+    }
+  }, []);
+
+  const login = (userId: number, userRole: string) => {
     setIsAuthenticated(true);
-    setRole(userRole); // sparar rollen
+    setRole(userRole);
+    sessionStorage.setItem('user', JSON.stringify({ userId, role: userRole })); // sparar i sessionStorage
   };
-  
+
   const logout = () => {
     setIsAuthenticated(false);
-    setRole(null); // återställer roll vid utloggning
+    setRole('');
+    sessionStorage.removeItem('user'); // tar bort användaren från sessionStorage
   };
 
   return (
