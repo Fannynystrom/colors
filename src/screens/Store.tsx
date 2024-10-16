@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import Modal from 'react-modal';
 import { AuthContext } from '../context/AuthContext';
 
+// Sätt modal root element
 Modal.setAppElement('#root');
 
 const Store: React.FC = () => {
@@ -15,7 +16,7 @@ const Store: React.FC = () => {
   const [products, setProducts] = useState<Array<any>>([]); // state för produkter
 
   useEffect(() => {
-    // hämta produkter från servern
+    // Hämta produkter från servern
     const fetchProducts = async () => {
       try {
         const response = await fetch('http://localhost:3001/products');
@@ -26,14 +27,14 @@ const Store: React.FC = () => {
       }
     };
 
-    fetchProducts(); // anropa funktionen för att hämta produkter
+    fetchProducts(); // Anropa funktionen för att hämta produkter
   }, []); 
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
   
     const productData = { name, description, price };
-    console.log('Submitting product:', productData); // loggningen
+    console.log('Submitting product:', productData); // Loggningen
   
     try {
       const response = await fetch('http://localhost:3001/products', {
@@ -46,7 +47,14 @@ const Store: React.FC = () => {
   
       if (response.ok) {
         console.log('Product created successfully');
-        // ...
+        // Hämta produkter igen för att uppdatera listan
+        const updatedResponse = await fetch('http://localhost:3001/products');
+        const updatedData = await updatedResponse.json();
+        setProducts(updatedData); // Uppdatera produkterna i state
+        setModalIsOpen(false); // Stäng modal efter skapande
+        setName('');
+        setDescription('');
+        setPrice('');
       } else {
         console.error('Failed to create product:', response.statusText);
       }
@@ -54,15 +62,17 @@ const Store: React.FC = () => {
       console.error('Error:', error);
     }
   };
-  
+
   return (
     <div>
+      <img src={`${process.env.PUBLIC_URL}/målarrubrik.png`} alt="Butik Rubrik" style={{ width: '90%', height: 'auto' }} />
+      
       <h1>Butik</h1>
       {isAdmin && (
         <button onClick={() => setModalIsOpen(true)}>Lägg till produkt</button>
       )}
 
-      {/* modalen för att lägga till produkt */}
+      {/* Modalen för att lägga till produkt */}
       <Modal isOpen={modalIsOpen} onRequestClose={() => setModalIsOpen(false)}>
         <h2>Lägg till produkt</h2>
         <form onSubmit={handleSubmit}>
@@ -91,7 +101,7 @@ const Store: React.FC = () => {
         <button onClick={() => setModalIsOpen(false)}>Stäng</button>
       </Modal>
 
-      {/* listan med produkter */}
+      {/* Listan med produkter */}
       <div>
         <h2>Produkter</h2>
         <ul>
