@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom'; 
+import '../styles/RegisterStyles.css'
 
 const Register = () => {
   const [username, setUsername] = useState('');
@@ -8,8 +9,25 @@ const Register = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate(); 
 
+  // funktion för att kontrollera lösenordet och om de uppfyller krav
+  const validatePassword = (password: string) => {
+    const symbolPattern = /[!@#$%^&*(),.?":{}|<>]/g;
+    const hasTwoSymbols = (password.match(symbolPattern) || []).length >= 2;
+
+    if (password.length >= 15 || (password.length >= 10 && hasTwoSymbols)) {
+      return true;
+    }
+    return false;
+  };
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // kollar lösenordet innan registrering om de inte uppfyller kraven meddelas detta 
+    if (!validatePassword(password)) {
+      setError('Lösenordet måste vara minst 15 tecken långt, eller minst 10 tecken långt och innehålla minst två symboler.');
+      return;
+    }
 
     try {
       const response = await axios.post('http://localhost:3001/register', {
@@ -17,7 +35,7 @@ const Register = () => {
         password,
       });
       console.log('Registrerad:', response.data);
-      navigate('/login');
+      navigate('/');
     } catch (err) {
       setError('Registrering misslyckades.');
       console.error('Registrering misslyckades:', err);

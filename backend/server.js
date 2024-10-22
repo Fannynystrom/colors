@@ -23,21 +23,37 @@ app.get('/users', (req, res) => {
 app.post('/register', async (req, res) => {
   const { username, password } = req.body;
 
-  // hashar lösenordet INNAN de sparas
-  const hashedPassword = await bcrypt.hash(password, 10);
+  // validerar lösenordet
+  const symbolPattern = /[!@#$%^&*(),.?":{}|<>]/g;
+  const hasTwoSymbols = (password.match(symbolPattern) || []).length >= 2;
 
-  // alla användare som skapas blir users
-  connection.query('INSERT INTO users (username, password, role) VALUES (?, ?, ?)', [username, hashedPassword, 'user'], (err, results) => {
-    if (err) {
-      return res.status(500).send('Registrering misslyckades.');
-    }
+  // Kontrollera om lösenordet uppfyller kraven
+  if (password.length < 15 && !(password.length >= 10 && hasTwoSymbols)) {
+    return res.status(400).send('Lösenordet måste vara minst 15 tecken långt, eller minst 10 tecken långt och innehålla minst två symboler.');
+  }
 
-    res.status(201).send('Användare skapad!');
-  });
+  try {
+    // hashar lösenordet INNAN det sparas
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // alla användare som skapas blir users
+    connection.query(
+      'INSERT INTO users (username, password, role) VALUES (?, ?, ?)',
+      [username, hashedPassword, 'user'],
+      (err, results) => {
+        if (err) {
+          return res.status(500).send('Registrering misslyckades.');
+        }
+        res.status(201).send('Användare skapad!');
+      }
+    );
+  } catch (err) {
+    res.status(500).send('Något gick fel vid registreringen.');
+  }
 });
 
   
-// Route för inloggning
+//  inloggning
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
 
