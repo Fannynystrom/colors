@@ -54,3 +54,6 @@
     margin-top: 15px;
   }
   
+  .error.countdown {
+    font-weight: bold;
+  }
