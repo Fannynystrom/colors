@@ -1,3 +1,4 @@
+// AppRouter.tsx
 import React, { useContext } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Hem from './screens/Home'; 
@@ -8,6 +9,7 @@ import Register from './screens/Register';
 import Admin from './screens/Admin';
 import Store from './screens/Store'; 
 import { AuthContext } from './context/AuthContext';
+import ProtectedRoute from './ProtectedRoute';
 
 function AppRouter() {
   const authContext = useContext(AuthContext);
@@ -22,7 +24,14 @@ function AppRouter() {
         <Route path="/store" element={<Store />} /> 
         <Route path="/about" element={<About />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/admin" element={<Admin />} />
+        <Route 
+          path="/admin" 
+          element={
+            <ProtectedRoute roleRequired="admin">
+              <Admin />
+            </ProtectedRoute>
+          } 
+        />
       </Routes>
     </Router>
   );
