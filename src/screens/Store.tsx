@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import Modal from 'react-modal';
 import { AuthContext } from '../context/AuthContext';
 
-// Sätt modal root element
+//  modal som root element
 Modal.setAppElement('#root');
 
 const Store: React.FC = () => {
@@ -15,8 +15,10 @@ const Store: React.FC = () => {
   const [price, setPrice] = useState<number | ''>('');
   const [products, setProducts] = useState<Array<any>>([]); // state för produkter
 
+  const [selectedProduct, setSelectedProduct] = useState<any>(null); // state för vald produkt
+
   useEffect(() => {
-    // Hämta produkter från servern
+    // hämtar produkter från servern
     const fetchProducts = async () => {
       try {
         const response = await fetch('http://localhost:3001/products');
@@ -27,14 +29,14 @@ const Store: React.FC = () => {
       }
     };
 
-    fetchProducts(); // Anropa funktionen för att hämta produkter
+    fetchProducts(); 
   }, []); 
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
   
     const productData = { name, description, price };
-    console.log('Submitting product:', productData); // Loggningen
+    console.log('Submitting product:', productData); // loggning
   
     try {
       const response = await fetch('http://localhost:3001/products', {
@@ -47,11 +49,11 @@ const Store: React.FC = () => {
   
       if (response.ok) {
         console.log('Product created successfully');
-        // Hämta produkter igen för att uppdatera listan
+        // hämtar produkterna igen för att uppdatera listan
         const updatedResponse = await fetch('http://localhost:3001/products');
         const updatedData = await updatedResponse.json();
-        setProducts(updatedData); // Uppdatera produkterna i state
-        setModalIsOpen(false); // Stäng modal efter skapande
+        setProducts(updatedData); // uppdaterar produkterna 
+        setModalIsOpen(false); // stänger modal efter skapande
         setName('');
         setDescription('');
         setPrice('');
@@ -63,6 +65,10 @@ const Store: React.FC = () => {
     }
   };
 
+  const handleProductClick = (product: any) => {
+    setSelectedProduct(product); // den klickade produkten som vald produkt
+  };
+
   return (
     <div>
       <img src={`${process.env.PUBLIC_URL}/målarrubrik.png`} alt="Butik Rubrik" style={{ width: '90%', height: 'auto' }} />
@@ -72,7 +78,7 @@ const Store: React.FC = () => {
         <button onClick={() => setModalIsOpen(true)}>Lägg till produkt</button>
       )}
 
-      {/* Modalen för att lägga till produkt */}
+      {/* modalen för att lägga till produkt (admin) */}
       <Modal isOpen={modalIsOpen} onRequestClose={() => setModalIsOpen(false)}>
         <h2>Lägg till produkt</h2>
         <form onSubmit={handleSubmit}>
@@ -101,12 +107,12 @@ const Store: React.FC = () => {
         <button onClick={() => setModalIsOpen(false)}>Stäng</button>
       </Modal>
 
-      {/* Listan med produkter */}
+      {/* listan med produkter */}
       <div>
         <h2>Produkter</h2>
         <ul>
           {products.map(product => (
-            <li key={product.id}>
+            <li key={product.id} onClick={() => handleProductClick(product)}>
               <h3>{product.name}</h3>
               <p>{product.description}</p>
               <p>Pris: {product.price} kr</p>
@@ -114,6 +120,21 @@ const Store: React.FC = () => {
           ))}
         </ul>
       </div>
+
+      {/* modal för vald produkt */}
+      <Modal 
+        isOpen={!!selectedProduct} 
+        onRequestClose={() => setSelectedProduct(null)}
+      >
+        {selectedProduct && (
+          <div>
+            <h2>{selectedProduct.name}</h2>
+            <p>{selectedProduct.description}</p>
+            <p>Pris: {selectedProduct.price} kr</p>
+            <button onClick={() => setSelectedProduct(null)}>Stäng</button>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

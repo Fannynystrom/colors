@@ -32,6 +32,7 @@ app.post('/login', (req, res) => {
     loginAttempts[username].attempts = 0;
   }
 
+  //kollar om inputen för användarnamnet innehåller tillåtna tecken
   connection.query('SELECT * FROM users WHERE username = ?', [username], (err, results) => {
     if (err) {
       return res.status(500).send('Server error.');
