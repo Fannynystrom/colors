@@ -2,6 +2,8 @@ import React, { useContext, useEffect, useState } from 'react';
 import Modal from 'react-modal';
 import { AuthContext } from '../context/AuthContext';
 import '../../src/styles/store/ModalAdminStyles.css'
+import '../../src/styles/store/ModalProductsStyles.css'
+import '../../src/styles/store/Shop.css'
 
 //  modal som root element
 Modal.setAppElement('#root');
@@ -71,7 +73,7 @@ const Store: React.FC = () => {
   };
 
   return (
-    <div>
+    <div className='shop'>
       <img src={`${process.env.PUBLIC_URL}/målarrubrik.png`} alt="Butik Rubrik" style={{ width: '90%', height: 'auto' }} />
       
       <h1>Butik</h1>
