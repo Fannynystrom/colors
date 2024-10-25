@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import DOMPurify from 'dompurify';
 
 interface Comment {
   productId: number;
@@ -17,8 +18,11 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ productId, comments, 
   const handleCommentSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (newComment.trim() !== '') {
-      onAddComment({ productId, text: newComment });
-      setNewComment(''); // rensar input efter att kommentaren har skickats
+      // sanerar kommentaren innan den läggs till.
+      // script taggar försvinner helt, a taggar neutraliseras
+      const sanitizedComment = DOMPurify.sanitize(newComment);
+      onAddComment({ productId, text: sanitizedComment });
+      setNewComment(''); // rensar inputen efter att kommentaren har skickats
     }
   };
 
@@ -29,7 +33,7 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ productId, comments, 
         {comments
           .filter(comment => comment.productId === productId)
           .map((comment, index) => (
-            <li key={index}>{comment.text}</li>
+            <li key={index} dangerouslySetInnerHTML={{ __html: comment.text }} />
           ))}
       </ul>
 
