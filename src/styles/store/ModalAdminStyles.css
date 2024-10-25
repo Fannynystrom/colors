@@ -1,0 +1,62 @@
+.admin-add-product-modal {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 50%;
+    max-width: 600px;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transform: translate(-50%, -50%);
+    transition: all 0.3s ease-in-out;
+    z-index: 1000;
+  }
+  
+  .admin-add-product-modal h2 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  
+  .admin-add-product-modal form {
+    display: flex;
+    flex-direction: column;
+    width: 80%;
+  }
+  
+  .admin-add-product-modal input,
+  .admin-add-product-modal textarea {
+    margin-bottom: 15px;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    transition: border-color 0.3s ease-in-out;
+  }
+  
+  .admin-add-product-modal input:focus,
+  .admin-add-product-modal textarea:focus {
+    border-color: #333;
+    outline: none;
+  }
+  
+  .admin-add-product-modal button {
+    padding: 10px 15px 10px 15px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+    background-color: #007bff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease-in-out;
+    margin: 5px;
+  }
+  
+  .admin-add-product-modal button:hover {
+    background-color: #0056b3;
+  }
+  

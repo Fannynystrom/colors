@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import Modal from 'react-modal';
 import { AuthContext } from '../context/AuthContext';
+import '../../src/styles/store/ModalAdminStyles.css'
 
 //  modal som root element
 Modal.setAppElement('#root');
@@ -78,8 +79,11 @@ const Store: React.FC = () => {
         <button onClick={() => setModalIsOpen(true)}>Lägg till produkt</button>
       )}
 
-      {/* modalen för att lägga till produkt (admin) */}
-      <Modal isOpen={modalIsOpen} onRequestClose={() => setModalIsOpen(false)}>
+     {/* modal för att lägga till produkt (admin) */}
+     <Modal isOpen={modalIsOpen} onRequestClose={() => setModalIsOpen(false)}
+        className="admin-add-product-modal"
+>
+      
         <h2>Lägg till produkt</h2>
         <form onSubmit={handleSubmit}>
           <input 
@@ -107,6 +111,7 @@ const Store: React.FC = () => {
         <button onClick={() => setModalIsOpen(false)}>Stäng</button>
       </Modal>
 
+
       {/* listan med produkter */}
       <div>
         <h2>Produkter</h2>
@@ -124,17 +129,18 @@ const Store: React.FC = () => {
       {/* modal för vald produkt */}
       <Modal 
         isOpen={!!selectedProduct} 
-        onRequestClose={() => setSelectedProduct(null)}
+        onRequestClose={() => setSelectedProduct(null)} 
+        className="product-details-modal"
       >
-        {selectedProduct && (
-          <div>
-            <h2>{selectedProduct.name}</h2>
-            <p>{selectedProduct.description}</p>
-            <p>Pris: {selectedProduct.price} kr</p>
-            <button onClick={() => setSelectedProduct(null)}>Stäng</button>
-          </div>
-        )}
-      </Modal>
+         {selectedProduct && (
+    <div>
+        <h2>{selectedProduct.name}</h2>
+        <p>{selectedProduct.description}</p>
+        <p>Pris: {selectedProduct.price} kr</p>
+        <button onClick={() => setSelectedProduct(null)}>Stäng</button>
+    </div>
+  )}
+    </Modal>
     </div>
   );
 }
