@@ -1,11 +1,12 @@
 import React, { useContext, useEffect, useState } from 'react';
 import Modal from 'react-modal';
 import { AuthContext } from '../context/AuthContext';
-import '../../src/styles/store/ModalAdminStyles.css'
-import '../../src/styles/store/ModalProductsStyles.css'
-import '../../src/styles/store/Shop.css'
+import '../../src/styles/store/ModalAdminStyles.css';
+import '../../src/styles/store/ModalProductsStyles.css';
+import '../../src/styles/store/Shop.css';
+import CommentsSection from '../components/CommentSection'; 
 
-//  modal som root element
+// modal som root element
 Modal.setAppElement('#root');
 
 const Store: React.FC = () => {
@@ -19,6 +20,7 @@ const Store: React.FC = () => {
   const [products, setProducts] = useState<Array<any>>([]); // state för produkter
 
   const [selectedProduct, setSelectedProduct] = useState<any>(null); // state för vald produkt
+  const [comments, setComments] = useState<{ productId: number; text: string }[]>([]); // state för kommentarer
 
   useEffect(() => {
     // hämtar produkter från servern
@@ -32,15 +34,15 @@ const Store: React.FC = () => {
       }
     };
 
-    fetchProducts(); 
-  }, []); 
+    fetchProducts();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-  
+
     const productData = { name, description, price };
     console.log('Submitting product:', productData); // loggning
-  
+
     try {
       const response = await fetch('http://localhost:3001/products', {
         method: 'POST',
@@ -49,13 +51,13 @@ const Store: React.FC = () => {
         },
         body: JSON.stringify(productData),
       });
-  
+
       if (response.ok) {
         console.log('Product created successfully');
         // hämtar produkterna igen för att uppdatera listan
         const updatedResponse = await fetch('http://localhost:3001/products');
         const updatedData = await updatedResponse.json();
-        setProducts(updatedData); // uppdaterar produkterna 
+        setProducts(updatedData); // uppdaterar produkterna
         setModalIsOpen(false); // stänger modal efter skapande
         setName('');
         setDescription('');
@@ -72,47 +74,47 @@ const Store: React.FC = () => {
     setSelectedProduct(product); // den klickade produkten som vald produkt
   };
 
+  const addComment = (newComment: { productId: number; text: string }) => {
+    setComments([...comments, newComment]);
+  };
+
   return (
-    <div className='shop'>
+    <div className="shop">
       <img src={`${process.env.PUBLIC_URL}/målarrubrik.png`} alt="Butik Rubrik" style={{ width: '90%', height: 'auto' }} />
-      
+
       <h1>Butik</h1>
       {isAdmin && (
         <button onClick={() => setModalIsOpen(true)}>Lägg till produkt</button>
       )}
 
-     {/* modal för att lägga till produkt (admin) */}
-     <Modal isOpen={modalIsOpen} onRequestClose={() => setModalIsOpen(false)}
-        className="admin-add-product-modal"
->
-      
+      {/* modal för att lägga till produkt (admin) */}
+      <Modal isOpen={modalIsOpen} onRequestClose={() => setModalIsOpen(false)} className="admin-add-product-modal">
         <h2>Lägg till produkt</h2>
         <form onSubmit={handleSubmit}>
-          <input 
-            type="text" 
-            placeholder="Namn" 
-            value={name} 
-            onChange={(e) => setName(e.target.value)} 
-            required 
+          <input
+            type="text"
+            placeholder="Namn"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
           />
-          <textarea 
-            placeholder="Beskrivning" 
-            value={description} 
-            onChange={(e) => setDescription(e.target.value)} 
-            required 
+          <textarea
+            placeholder="Beskrivning"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            required
           />
-          <input 
-            type="number" 
-            placeholder="Pris" 
-            value={price} 
+          <input
+            type="number"
+            placeholder="Pris"
+            value={price}
             onChange={(e) => setPrice(Number(e.target.value))}
-            required 
+            required
           />
           <button type="submit">Skapa produkt</button>
         </form>
         <button onClick={() => setModalIsOpen(false)}>Stäng</button>
       </Modal>
-
 
       {/* listan med produkter */}
       <div>
@@ -129,22 +131,26 @@ const Store: React.FC = () => {
       </div>
 
       {/* modal för vald produkt */}
-      <Modal 
-        isOpen={!!selectedProduct} 
-        onRequestClose={() => setSelectedProduct(null)} 
-        className="product-details-modal"
-      >
-         {selectedProduct && (
-    <div>
-        <h2>{selectedProduct.name}</h2>
-        <p>{selectedProduct.description}</p>
-        <p>Pris: {selectedProduct.price} kr</p>
-        <button onClick={() => setSelectedProduct(null)}>Stäng</button>
-    </div>
-  )}
-    </Modal>
+      <Modal isOpen={!!selectedProduct} onRequestClose={() => setSelectedProduct(null)} className="product-details-modal">
+        {selectedProduct && (
+          <div>
+            <h2>{selectedProduct.name}</h2>
+            <p>{selectedProduct.description}</p>
+            <p>Pris: {selectedProduct.price} kr</p>
+
+            {/* kommentarer */}
+            <CommentsSection
+              productId={selectedProduct.id}
+              comments={comments}
+              onAddComment={addComment}
+            />
+
+            <button onClick={() => setSelectedProduct(null)}>Stäng</button>
+          </div>
+        )}
+      </Modal>
     </div>
   );
-}
+};
 
 export default Store;
