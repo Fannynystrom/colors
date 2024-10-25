@@ -29,14 +29,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       window.location.href = '/'; // skickas till login
     };
 
-    // timer för inaktivitet (1 minut = 60000 ms)
-    let inactivityTimer: NodeJS.Timeout = setTimeout(handleLogoutDueToInactivity, 60000);
+ // timer för inaktivitet (5 minuter = 300000 ms)
+let inactivityTimer: NodeJS.Timeout = setTimeout(handleLogoutDueToInactivity, 300000);
 
-    // timern återställs vid aktivitet 
-    const resetTimer = () => {
-      clearTimeout(inactivityTimer);
-      inactivityTimer = setTimeout(handleLogoutDueToInactivity, 60000);
-    };
+// timern återställs vid aktivitet 
+const resetTimer = () => {
+  clearTimeout(inactivityTimer);
+  inactivityTimer = setTimeout(handleLogoutDueToInactivity, 300000);
+};
+
 
     // eventlyssnare för att upptäcka aktivitet om man rör mus elr trycker på tangent
     window.addEventListener('mousemove', resetTimer);
