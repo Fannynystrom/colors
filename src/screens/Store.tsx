@@ -4,7 +4,7 @@ import { AuthContext } from '../context/AuthContext';
 import '../../src/styles/store/ModalAdminStyles.css';
 import '../../src/styles/store/ModalProductsStyles.css';
 import '../../src/styles/store/Shop.css';
-import CommentsSection from '../components/CommentSection'; 
+import CommentsSection from '../components/CommentSection';
 
 // modal som root element
 Modal.setAppElement('#root');
@@ -20,7 +20,6 @@ const Store: React.FC = () => {
   const [products, setProducts] = useState<Array<any>>([]); // state för produkter
 
   const [selectedProduct, setSelectedProduct] = useState<any>(null); // state för vald produkt
-  const [comments, setComments] = useState<{ productId: number; text: string }[]>([]); // state för kommentarer
 
   useEffect(() => {
     // hämtar produkter från servern
@@ -72,10 +71,6 @@ const Store: React.FC = () => {
 
   const handleProductClick = (product: any) => {
     setSelectedProduct(product); // den klickade produkten som vald produkt
-  };
-
-  const addComment = (newComment: { productId: number; text: string }) => {
-    setComments([...comments, newComment]);
   };
 
   return (
@@ -139,11 +134,7 @@ const Store: React.FC = () => {
             <p>Pris: {selectedProduct.price} kr</p>
 
             {/* kommentarer */}
-            <CommentsSection
-              productId={selectedProduct.id}
-              comments={comments}
-              onAddComment={addComment}
-            />
+            <CommentsSection productId={selectedProduct.id} />
 
             <button onClick={() => setSelectedProduct(null)}>Stäng</button>
           </div>
