@@ -49,17 +49,11 @@
   }
   
   /* Kommentar-sektion */
-  .comments-section {
+  /* Kommentar-sektion */
+.comments-section {
     margin-top: 20px;
     display: flex;
     flex-direction: column;
-  }
-  
-  .comments-section h3 {
-    font-size: 20px;
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 10px;
   }
   
   /* Kommentarlistan */
@@ -69,55 +63,13 @@
     margin: 0;
   }
   
+  /* Varje kommentar */
   .comments-section li {
     padding: 10px;
     margin-bottom: 10px;
     border: 1px solid #ddd;
     border-radius: 4px;
     background-color: #f9f9f9;
-    display: flex;
-    flex-direction: column; /* Gör varje kommentar till en kolumn */
-    align-items: flex-start; /* Justerar kommentarens innehåll till vänster */
-  }
-  
-  /* Kommentarinnehåll */
-  .comments-section li p {
-    margin: 0;
-    font-size: 14px;
-    color: #555;
-  }
-  
-  /* Kommentar formulär */
-  .comments-section form {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-top: 15px;
-  }
-  
-  .comments-section textarea {
-    resize: none;
-    padding: 10px;
-    font-size: 14px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    width: 100%; /* Fyller bredden på containern */
-  }
-  
-  .comments-section button {
-    align-self: flex-start;
-    padding: 8px 12px;
-    font-size: 14px;
-    font-weight: 600;
-    color: #fff;
-    background-color: #ff6f61;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.3s ease-in-out;
-  }
-  
-  .comments-section button:hover {
-    background-color: #ff4a3e;
+    display: block; /* Se till att varje kommentar är en blocknivåelement */
   }
   

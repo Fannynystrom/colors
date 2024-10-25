@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import bcrypt from 'bcrypt';
 import cors from 'cors';
 import connection from './db.js';
+import { logLoginAttempt } from './log.js'; 
 
 dotenv.config();
 
@@ -32,21 +33,22 @@ app.post('/login', (req, res) => {
     loginAttempts[username].attempts = 0;
   }
 
-  //kollar om inputen för användarnamnet innehåller tillåtna tecken
+  // Kollar om användarnamnet finns
   connection.query('SELECT * FROM users WHERE username = ?', [username], (err, results) => {
     if (err) {
+      logLoginAttempt(username, false); // loggar misslyckat inloggningsförsök
       return res.status(500).send('Server error.');
     }
     
     // detta blocket är för användare som inte finns
     if (results.length === 0) {
-      // ökar antalet misslyckade försök för användaren
       if (!loginAttempts[username]) {
         loginAttempts[username] = { attempts: 1, lastAttempt: Date.now() };
       } else {
         loginAttempts[username].attempts += 1;
         loginAttempts[username].lastAttempt = Date.now();
       }
+      logLoginAttempt(username, false); // loggar misslyckat inloggningsförsök på grund av felaktigt användarnamn
       return res.status(401).send('Felaktigt användarnamn eller lösenord.');
     }
 
@@ -55,13 +57,13 @@ app.post('/login', (req, res) => {
     // detta block är för användare som finns men ger samma information
     bcrypt.compare(password, user.password, (err, match) => {
       if (err || !match) {
-        // ökar antalet misslyckade försök för användaren
         if (!loginAttempts[username]) {
           loginAttempts[username] = { attempts: 1, lastAttempt: Date.now() };
         } else {
           loginAttempts[username].attempts += 1;
           loginAttempts[username].lastAttempt = Date.now();
         }
+        logLoginAttempt(username, false); // loggar misslyckat inloggningsförsök på grund av felaktigt lösenord
         return res.status(401).send('Felaktigt användarnamn eller lösenord.');
       }
 
@@ -70,6 +72,7 @@ app.post('/login', (req, res) => {
         delete loginAttempts[username];
       }
 
+      logLoginAttempt(username, true); // loggar lyckat inloggningsförsök
       res.json({ message: 'Inloggning lyckades!', userId: user.id, role: user.role });
     });
   });
@@ -131,7 +134,6 @@ app.post('/products', async (req, res) => {
   try {
     await connection.promise().query('INSERT INTO products (name, description, price) VALUES (?, ?, ?)', 
       [name, description, price]);
-    // skickar ett JSON-objekt som svar
     res.status(201).json({ message: 'Produkt skapad!' });
   } catch (err) {
     console.error('Error creating product:', err);
@@ -170,7 +172,6 @@ app.get('/comments/:productId', (req, res) => {
     }
   );
 });
-
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
