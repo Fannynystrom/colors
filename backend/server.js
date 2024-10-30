@@ -21,12 +21,14 @@ const TIMEOUT_PERIOD = 30 * 1000; // 30 sekunder
 // inloggning
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
+  const ip = req.ip; // hämtar IP-adressen från förfrågan
+  const userAgent = req.get('User-Agent'); // hämtar User-Agent från förfrågan
 
   // kollar om användaren redan har gjort för många försök
   if (loginAttempts[username] && loginAttempts[username].attempts >= MAX_ATTEMPTS) {
     const timeSinceLastAttempt = Date.now() - loginAttempts[username].lastAttempt;
     if (timeSinceLastAttempt < TIMEOUT_PERIOD) {
-      const remainingTime = Math.ceil((TIMEOUT_PERIOD - timeSinceLastAttempt) / 1000); // Räkna ned tiden i sekunder
+      const remainingTime = Math.ceil((TIMEOUT_PERIOD - timeSinceLastAttempt) / 1000); // räknar ned tiden i sekunder
       return res.status(429).json({ message: 'För många misslyckade försök. Försök igen senare.', remainingTime });
     }
     // återställer räkningen efter timeout-perioden
@@ -36,7 +38,7 @@ app.post('/login', (req, res) => {
   // Kollar om användarnamnet finns
   connection.query('SELECT * FROM users WHERE username = ?', [username], (err, results) => {
     if (err) {
-      logLoginAttempt(username, false); // loggar misslyckat inloggningsförsök
+      logLoginAttempt(username, false, ip, userAgent); // loggar misslyckat inloggningsförsök
       return res.status(500).send('Server error.');
     }
     
@@ -48,7 +50,7 @@ app.post('/login', (req, res) => {
         loginAttempts[username].attempts += 1;
         loginAttempts[username].lastAttempt = Date.now();
       }
-      logLoginAttempt(username, false); // loggar misslyckat inloggningsförsök på grund av felaktigt användarnamn
+      logLoginAttempt(username, false, ip, userAgent); // loggar misslyckat inloggningsförsök på grund av felaktigt användarnamn
       return res.status(401).send('Felaktigt användarnamn eller lösenord.');
     }
 
@@ -63,7 +65,7 @@ app.post('/login', (req, res) => {
           loginAttempts[username].attempts += 1;
           loginAttempts[username].lastAttempt = Date.now();
         }
-        logLoginAttempt(username, false); // loggar misslyckat inloggningsförsök på grund av felaktigt lösenord
+        logLoginAttempt(username, false, ip, userAgent); // loggar misslyckat inloggningsförsök på grund av felaktigt lösenord
         return res.status(401).send('Felaktigt användarnamn eller lösenord.');
       }
 
@@ -72,7 +74,7 @@ app.post('/login', (req, res) => {
         delete loginAttempts[username];
       }
 
-      logLoginAttempt(username, true); // loggar lyckat inloggningsförsök
+      logLoginAttempt(username, true, ip, userAgent); // loggar lyckat inloggningsförsök
       res.json({ message: 'Inloggning lyckades!', userId: user.id, role: user.role });
     });
   });
