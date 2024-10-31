@@ -1,13 +1,21 @@
 /*ul för listan med produkter */
 .shop ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
   list-style: none;
   padding: 0;
   width: 100%;
+  margin: 0 auto;
 }
 
-/* varje endkild produkt */
+
+/* Stil för varje produkt */
 .shop ul li {
-  margin: 15px 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 300px; 
   padding: 15px;
   background-color: #f7f3f3;
   border: 1px solid #ddd;
@@ -23,20 +31,32 @@
 }
 
 .shop ul li h3 {
-  margin: 0;
   font-size: 20px;
   font-weight: 600;
   color: #333;
+  margin: 0;
+  text-align: center;
 }
 
 .shop ul li p {
-  margin: 5px 0;
   color: #666;
+  text-align: center;
 }
-
-
 
 .shop ul li button {
   background-color: rgba(0, 0, 255, 0.804);
-  margin-top: 20px;
+  color: #fff;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 }
+
+.shop ul li button:hover {
+  background-color: rgba(0, 0, 200, 0.8);
+}
+
+
+
