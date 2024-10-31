@@ -40,6 +40,15 @@ const Store: React.FC = () => {
     authContext?.setCartTotalCount(totalCount); // uppdaterar värdet i AuthContext
   };
 
+  // uppdaterar cartItems i AuthContext baserat på cartQuantities
+  const updateCartItems = () => {
+    const items = Object.entries(cartQuantities).map(([productId, quantity]) => {
+      const product = products.find(p => p.id === Number(productId));
+      return { id: product.id, name: product.name, price: product.price, quantity };
+    });
+    authContext?.setCartItems(items);
+  };
+
   const handleAddToCart = (product: any) => {
     setCartQuantities(prev => {
       const newQuantities = { ...prev, [product.id]: (prev[product.id] || 0) + 1 };
@@ -66,9 +75,10 @@ const Store: React.FC = () => {
     });
   };
 
-  // anropar updateCartTotalCount varje gång cartQuantities ändras
+  // anropar updateCartTotalCount och updateCartItems varje gång cartQuantities ändras
   useEffect(() => {
     updateCartTotalCount();
+    updateCartItems();
   }, [cartQuantities]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {

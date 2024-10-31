@@ -1,15 +1,22 @@
 import React, { createContext, useState, useEffect } from 'react';
 
+interface CartItem {
+  id: number;
+  name: string;
+  price: number;
+  quantity: number;
+}
+
 interface AuthContextType {
   isAuthenticated: boolean;
   role: string;
   login: (userId: number, userRole: string) => void;
   logout: () => void;
   cartTotalCount: number; // antal produkter tillagda
-  setCartTotalCount: React.Dispatch<React.SetStateAction<number>>; 
+  setCartTotalCount: React.Dispatch<React.SetStateAction<number>>;
+  cartItems: CartItem[]; // innehållet i varukorgen
+  setCartItems: React.Dispatch<React.SetStateAction<CartItem[]>>;
 }
-
-
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -17,6 +24,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [role, setRole] = useState<string>('');
   const [cartTotalCount, setCartTotalCount] = useState<number>(0); //  state för antal produkter i kassan
+  const [cartItems, setCartItems] = useState<CartItem[]>([]); // state för produkterna i varukorgen
 
   useEffect(() => {
     const storedUser = sessionStorage.getItem('user');
@@ -65,11 +73,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsAuthenticated(false);
     setRole('');
     setCartTotalCount(0); // nollställer antal produkter vid utloggning
+    setCartItems([]); // nollställer varukorgen vid utloggning
     sessionStorage.removeItem('user');
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, role, login, logout, cartTotalCount, setCartTotalCount }}>
+    <AuthContext.Provider value={{ isAuthenticated, role, login, logout, cartTotalCount, setCartTotalCount, cartItems, setCartItems }}>
       {children}
     </AuthContext.Provider>
   );
