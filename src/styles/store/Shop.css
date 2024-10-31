@@ -7,6 +7,7 @@
   padding: 0;
   width: 100%;
   margin: 0 auto;
+  margin-left: 20px;
 }
 
 
@@ -59,4 +60,38 @@
 }
 
 
+/*  mängdräknaren antal valda produkter */
+.quantity-control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.quantity-control button {
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+  font-weight: bold;
+  color: #fff;
+  background-color: #007bff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.quantity-control button:hover {
+  background-color: #0056b3;
+}
+
+.quantity-control span {
+  display: inline-block;
+  width: 50px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 10px;
+}
 

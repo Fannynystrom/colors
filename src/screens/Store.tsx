@@ -376,7 +376,7 @@ const Store: React.FC = () => {
               <p>Pris: {product.price} kr</p>
               <p>Lagerstatus: {product.stock} st</p>
               {cartQuantities[product.id] ? (
-                <div>
+                <div className="quantity-control">
                   <button onClick={(e) => { e.stopPropagation(); handleDecreaseQuantity(product.id); }}>-</button>
                   <span>{cartQuantities[product.id]}</span>
                   <button onClick={(e) => { e.stopPropagation(); handleIncreaseQuantity(product.id); }}>+</button>
