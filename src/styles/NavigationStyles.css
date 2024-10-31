@@ -27,3 +27,13 @@ nav {
     text-decoration: underline;
   }
   
+
+  .nav-links .checkout-icon {
+    margin-left: auto;
+    padding-left: 10px;
+  }
+  
+  .checkout-icon a {
+    font-size: 1.5em;
+  }
+  

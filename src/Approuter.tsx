@@ -10,6 +10,8 @@ import Admin from './screens/Admin';
 import Store from './screens/Store'; 
 import { AuthContext } from './context/AuthContext';
 import ProtectedRoute from './ProtectedRoute';
+import Pay from './screens/Pay';
+
 
 function AppRouter() {
   const authContext = useContext(AuthContext);
@@ -24,6 +26,8 @@ function AppRouter() {
         <Route path="/store" element={<Store />} /> 
         <Route path="/about" element={<About />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/pay" element={<Pay />} /> 
+
         <Route 
           path="/admin" 
           element={
