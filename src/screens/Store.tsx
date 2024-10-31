@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState, useRef } from 'react';
 import Modal from 'react-modal';
 import { AuthContext } from '../context/AuthContext';
 import '../../src/styles/store/ModalAdminStyles.css';
@@ -21,8 +21,10 @@ const Store: React.FC = () => {
   const [cartQuantities, setCartQuantities] = useState<{ [productId: number]: number }>({});
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [stock, setStock] = useState<number | ''>('');
-  const [editModalIsOpen, setEditModalIsOpen] = useState<boolean>(false); 
-  const [editProduct, setEditProduct] = useState<any>(null); 
+  const [editModalIsOpen, setEditModalIsOpen] = useState<boolean>(false);
+  const [editProduct, setEditProduct] = useState<any>(null);
+
+  const reservationTimers = useRef<{ [productId: number]: NodeJS.Timeout }>({});
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -41,13 +43,13 @@ const Store: React.FC = () => {
   // uppdaterar totalt antal produkter i varukorgen och värdet sitter i AuthContext
   const updateCartTotalCount = () => {
     const totalCount = Object.values(cartQuantities).reduce((total, quantity) => total + quantity, 0);
-    authContext?.setCartTotalCount(totalCount); 
+    authContext?.setCartTotalCount(totalCount);
   };
 
   // uppdaterar cartItems i AuthContext baserat på cartQuantities
   const updateCartItems = () => {
     const items = Object.entries(cartQuantities).map(([productId, quantity]) => {
-      const product = products.find(p => p.id === Number(productId));
+      const product = products.find((p) => p.id === Number(productId));
       return { id: product.id, name: product.name, price: product.price, quantity };
     });
     authContext?.setCartItems(items);
@@ -63,7 +65,7 @@ const Store: React.FC = () => {
     setEditModalIsOpen(true);
   };
 
-  //  produktuppdatering vid redigering
+  // Produktuppdatering vid redigering
   const handleUpdateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editProduct) return;
@@ -77,11 +79,11 @@ const Store: React.FC = () => {
       });
 
       if (response.ok) {
-        setProducts(prevProducts =>
-          prevProducts.map(p => (p.id === editProduct.id ? { ...p, ...updatedProduct } : p))
+        setProducts((prevProducts) =>
+          prevProducts.map((p) => (p.id === editProduct.id ? { ...p, ...updatedProduct } : p))
         );
-        setEditModalIsOpen(false); 
-        setEditProduct(null); 
+        setEditModalIsOpen(false);
+        setEditProduct(null);
       } else {
         console.error('Failed to update product');
       }
@@ -93,13 +95,13 @@ const Store: React.FC = () => {
   //lägger till i varukorg
   const handleAddToCart = async (product: any) => {
     const newQuantity = (cartQuantities[product.id] || 0) + 1;
-  
+
     if (product.stock >= newQuantity) {
-      setCartQuantities(prev => {
+      setCartQuantities((prev) => {
         const newQuantities = { ...prev, [product.id]: newQuantity };
         return newQuantities;
       });
-  
+
       try {
         // minska lagret på servern med endast den senaste ökningen
         const response = await fetch(`http://localhost:3001/products/${product.id}/decrementStock`, {
@@ -107,15 +109,14 @@ const Store: React.FC = () => {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ amount: 1 }), // minskar lagret med 1 för varje klick
+          body: JSON.stringify({ amount: 1 }), // Minskar lagret med 1 för varje klick
         });
-  
+
         if (response.ok) {
-          setProducts(prevProducts =>
-            prevProducts.map(p =>
-              p.id === product.id ? { ...p, stock: p.stock - 1 } : p
-            )
+          setProducts((prevProducts) =>
+            prevProducts.map((p) => (p.id === product.id ? { ...p, stock: p.stock - 1 } : p))
           );
+          startReservationTimer(product.id); // Startar timer för reservation
         } else {
           console.error('Failed to decrement stock');
         }
@@ -126,16 +127,32 @@ const Store: React.FC = () => {
       alert('Inte tillräckligt med lager.');
     }
   };
-  
-  //ökar produktantal i varukorg och snackar med servern om de
+
+  // Timer för att automatiskt ta bort reserverade produkter
+  const startReservationTimer = (productId: number) => {
+    clearTimeout(reservationTimers.current[productId]);
+
+    reservationTimers.current[productId] = setTimeout(() => {
+      handleRemoveReservation(productId);
+    }, 60000); // 1 minut
+  };
+
+  const handleRemoveReservation = (productId: number) => {
+    const quantity = cartQuantities[productId];
+    if (quantity) {
+      handleDecreaseQuantity(productId, quantity); // Återställ tillgänglig lagernivå
+    }
+  };
+
+  // Ökar produktantal i varukorg och snackar med servern om de
   const handleIncreaseQuantity = async (productId: number) => {
-    const product = products.find(p => p.id === productId);
+    const product = products.find((p) => p.id === productId);
     if (product && product.stock > (cartQuantities[productId] || 0)) {
-      setCartQuantities(prev => {
+      setCartQuantities((prev) => {
         const newQuantities = { ...prev, [productId]: (prev[productId] || 0) + 1 };
         return newQuantities;
       });
-  
+
       try {
         // minskar lagret på servern med 1 eftersom vi lägger till en produkt
         const response = await fetch(`http://localhost:3001/products/${productId}/decrementStock`, {
@@ -145,13 +162,12 @@ const Store: React.FC = () => {
           },
           body: JSON.stringify({ amount: 1 }),
         });
-  
+
         if (response.ok) {
-          setProducts(prevProducts =>
-            prevProducts.map(p =>
-              p.id === productId ? { ...p, stock: p.stock - 1 } : p
-            )
+          setProducts((prevProducts) =>
+            prevProducts.map((p) => (p.id === productId ? { ...p, stock: p.stock - 1 } : p))
           );
+          startReservationTimer(productId); // Startar timer vid varje ökning
         } else {
           console.error('Failed to decrement stock');
         }
@@ -163,18 +179,18 @@ const Store: React.FC = () => {
     }
   };
 
-  //handleDecreaseQuantity ökar/minskar och snackar med servern om de
-  const handleDecreaseQuantity = async (productId: number) => {
+  // handleDecreaseQuantity ökar/minskar och snackar med servern om de
+  const handleDecreaseQuantity = async (productId: number, decrementBy = 1) => {
     if (cartQuantities[productId] > 0) {
-      setCartQuantities(prev => {
+      setCartQuantities((prev) => {
         const newQuantities = { ...prev };
-        newQuantities[productId] -= 1;
-        if (newQuantities[productId] === 0) {
+        newQuantities[productId] -= decrementBy;
+        if (newQuantities[productId] <= 0) {
           delete newQuantities[productId];
         }
         return newQuantities;
       });
-  
+
       try {
         // ökar lagret på servern med 1 eftersom vi tar bort en produkt från varukorgen
         const response = await fetch(`http://localhost:3001/products/${productId}/incrementStock`, {
@@ -182,15 +198,14 @@ const Store: React.FC = () => {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ amount: 1 }),
+          body: JSON.stringify({ amount: decrementBy }),
         });
-  
+
         if (response.ok) {
-          setProducts(prevProducts =>
-            prevProducts.map(p =>
-              p.id === productId ? { ...p, stock: p.stock + 1 } : p
-            )
+          setProducts((prevProducts) =>
+            prevProducts.map((p) => (p.id === productId ? { ...p, stock: p.stock + decrementBy } : p))
           );
+          clearTimeout(reservationTimers.current[productId]); // Stoppar timern vid minskning
         } else {
           console.error('Failed to increment stock');
         }
@@ -200,7 +215,7 @@ const Store: React.FC = () => {
     }
   };
 
-  // anropar updateCartTotalCount och updateCartItems varje gång cartQuantities ändras
+  // Anropar updateCartTotalCount och updateCartItems varje gång cartQuantities ändras
   useEffect(() => {
     updateCartTotalCount();
     updateCartItems();
@@ -229,15 +244,15 @@ const Store: React.FC = () => {
   // anropar resetCartStock vid utloggning eller när komponenten avmonteras
   useEffect(() => {
     return () => {
-      resetCartStock(); 
+      resetCartStock();
     };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-  
+
     const productData = { name, description, price, stock };
-  
+
     try {
       const response = await fetch('http://localhost:3001/products', {
         method: 'POST',
@@ -246,7 +261,7 @@ const Store: React.FC = () => {
         },
         body: JSON.stringify(productData),
       });
-  
+
       if (response.ok) {
         const updatedResponse = await fetch('http://localhost:3001/products');
         const updatedData = await updatedResponse.json();
@@ -255,7 +270,7 @@ const Store: React.FC = () => {
         setName('');
         setDescription('');
         setPrice('');
-        setStock(''); 
+        setStock('');
       } else {
         console.error('Failed to create product:', response.statusText);
       }
@@ -267,6 +282,10 @@ const Store: React.FC = () => {
   const handleProductClick = (product: any) => {
     setSelectedProduct(product);
   };
+
+
+
+
 
   return (
     <div className="shop">

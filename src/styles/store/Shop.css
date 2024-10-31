@@ -1,12 +1,15 @@
+/*ul för listan med produkter */
 .shop ul {
   list-style: none;
   padding: 0;
+  width: 100%;
 }
 
+/* varje endkild produkt */
 .shop ul li {
   margin: 15px 0;
   padding: 15px;
-  background-color: #f9f9f9;
+  background-color: #f7f3f3;
   border: 1px solid #ddd;
   border-radius: 10px;
   cursor: pointer;
@@ -29,4 +32,11 @@
 .shop ul li p {
   margin: 5px 0;
   color: #666;
+}
+
+
+
+.shop ul li button {
+  background-color: rgba(0, 0, 255, 0.804);
+  margin-top: 20px;
 }
