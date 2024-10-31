@@ -314,19 +314,31 @@ const Store: React.FC = () => {
             required
           />
           <input
-            type="number"
-            placeholder="Pris"
-            value={price}
-            onChange={(e) => setPrice(Number(e.target.value))}
-            required
-          />
-          <input
-           type="number"
-           placeholder="Lagerstatus"
-           value={stock}
-           onChange={(e) => setStock(Number(e.target.value))}
-           required
-          />
+  type="number"
+  placeholder="Pris"
+  value={price}
+  onChange={(e) => {
+    const inputValue = e.target.value;
+    setPrice(inputValue === '' ? '' : Math.max(0, Number(inputValue)));
+  }}
+  min="0"
+  required
+/>
+
+
+<input
+  type="number"
+  placeholder="Lagerstatus"
+  value={stock}
+  onChange={(e) => {
+    const inputValue = e.target.value;
+    setStock(inputValue === '' ? '' : Math.max(0, Number(inputValue)));
+  }}
+  min="0"
+  required
+/>
+
+
           <button type="submit">Skapa produkt</button>
         </form>
         <button onClick={() => setModalIsOpen(false)}>Stäng</button>
@@ -338,6 +350,10 @@ const Store: React.FC = () => {
         <ul>
           {products.map(product => (
             <li key={product.id} onClick={() => handleProductClick(product)}>
+                {/* Redigeringsikon för admin */}
+                {isAdmin && (
+                <FaEdit onClick={(e) => { e.stopPropagation(); openEditModal(product); }} style={{ cursor: 'pointer', float: 'right' }} />
+              )}
               <h3>{product.name}</h3>
               <p>{product.description}</p>
               <p>Pris: {product.price} kr</p>
@@ -352,10 +368,7 @@ const Store: React.FC = () => {
                 <button onClick={(e) => { e.stopPropagation(); handleAddToCart(product); }}>Lägg till i varukorg</button>
               )}
               
-              {/* Redigeringsikon för admin */}
-              {isAdmin && (
-                <FaEdit onClick={(e) => { e.stopPropagation(); openEditModal(product); }} style={{ cursor: 'pointer' }} />
-              )}
+            
             </li>
           ))}
         </ul>
@@ -404,19 +417,29 @@ const Store: React.FC = () => {
             required
           />
           <input
-            type="number"
-            placeholder="Pris"
-            value={price}
-            onChange={(e) => setPrice(Number(e.target.value))}
-            required
-          />
-          <input
-            type="number"
-            placeholder="Lagerstatus"
-            value={stock}
-            onChange={(e) => setStock(Number(e.target.value))}
-            required
-          />
+          type="number"
+          placeholder="Pris"
+          value={price}
+          onChange={(e) => {
+       const inputValue = e.target.value;
+       setPrice(inputValue === '' ? '' : Math.max(0, Number(inputValue)));
+     }}
+        min="0"
+        required
+         />
+
+         <input
+         type="number"
+         placeholder="Lagerstatus"
+         value={stock}
+         onChange={(e) => {
+       const inputValue = e.target.value;
+       setStock(inputValue === '' ? '' : Math.max(0, Number(inputValue)));
+     }}
+      min="0"
+      required
+     />
+
           <button type="submit">Spara ändringar</button>
         </form>
         <button onClick={() => setEditModalIsOpen(false)}>Stäng</button>

@@ -6,7 +6,7 @@
     width: 50%;
     max-width: 600px;
     padding: 20px;
-    background-color: #fff;
+    background-color: rgb(240, 237, 237);
     border-radius: 8px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     transform: translate(-50%, -50%);
@@ -49,9 +49,8 @@
   }
   
   /* Kommentar-sektion */
-  /* Kommentar-sektion */
-.comments-section {
-    margin-top: 20px;
+ .comments-section {
+    margin-top: 40px;
     display: flex;
     flex-direction: column;
   }
@@ -73,3 +72,7 @@
     display: block; /* Se till att varje kommentar är en blocknivåelement */
   }
   
+  .comments-section textarea {
+    width: 90%;
+    padding: 20px 10px 20px 10px;
+  }
