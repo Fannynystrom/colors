@@ -123,25 +123,29 @@ app.get('/users', (req, res) => {
 
 // hämta alla produkter
 app.get('/products', (req, res) => {
-  connection.query('SELECT id, name, description, price FROM products', (err, results) => {
+  connection.query('SELECT id, name, description, price, stock FROM products', (err, results) => {
     if (err) throw err;
     res.json(results);
   });
 });
 
+
 // skapa en ny produkt
 app.post('/products', async (req, res) => {
-  const { name, description, price } = req.body;
+  const { name, description, price, stock } = req.body;
 
   try {
-    await connection.promise().query('INSERT INTO products (name, description, price) VALUES (?, ?, ?)', 
-      [name, description, price]);
+    await connection.promise().query(
+      'INSERT INTO products (name, description, price, stock) VALUES (?, ?, ?, ?)', 
+      [name, description, price, stock]
+    );
     res.status(201).json({ message: 'Produkt skapad!' });
   } catch (err) {
     console.error('Error creating product:', err);
     res.status(500).json({ error: 'Fel vid skapande av produkt.' });
   }
 });
+
 
 // skapa kommentarer
 app.post('/comments', (req, res) => {

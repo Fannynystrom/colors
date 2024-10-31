@@ -19,6 +19,7 @@ const Store: React.FC = () => {
   const [products, setProducts] = useState<Array<any>>([]);
   const [cartQuantities, setCartQuantities] = useState<{ [productId: number]: number }>({});
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [stock, setStock] = useState<number | ''>('');
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -83,9 +84,9 @@ const Store: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    const productData = { name, description, price };
-
+  
+    const productData = { name, description, price, stock };
+  
     try {
       const response = await fetch('http://localhost:3001/products', {
         method: 'POST',
@@ -94,7 +95,7 @@ const Store: React.FC = () => {
         },
         body: JSON.stringify(productData),
       });
-
+  
       if (response.ok) {
         const updatedResponse = await fetch('http://localhost:3001/products');
         const updatedData = await updatedResponse.json();
@@ -103,6 +104,7 @@ const Store: React.FC = () => {
         setName('');
         setDescription('');
         setPrice('');
+        setStock(''); // återställer lagerstatus
       } else {
         console.error('Failed to create product:', response.statusText);
       }
@@ -110,6 +112,7 @@ const Store: React.FC = () => {
       console.error('Error:', error);
     }
   };
+  
 
   const handleProductClick = (product: any) => {
     setSelectedProduct(product);
@@ -148,6 +151,14 @@ const Store: React.FC = () => {
             onChange={(e) => setPrice(Number(e.target.value))}
             required
           />
+          <input
+           type="number"
+           placeholder="Lagerstatus"
+           value={stock}
+           onChange={(e) => setStock(Number(e.target.value))}
+           required
+  />
+          
           <button type="submit">Skapa produkt</button>
         </form>
         <button onClick={() => setModalIsOpen(false)}>Stäng</button>
@@ -162,8 +173,9 @@ const Store: React.FC = () => {
               <h3>{product.name}</h3>
               <p>{product.description}</p>
               <p>Pris: {product.price} kr</p>
-              {cartQuantities[product.id] ? (
-                <div>
+              <p>Lagerstatus: {product.stock} st</p>
+      {cartQuantities[product.id] ? (
+        <div>
                   <button onClick={(e) => { e.stopPropagation(); handleDecreaseQuantity(product.id); }}>-</button>
                   <span>{cartQuantities[product.id]}</span>
                   <button onClick={(e) => { e.stopPropagation(); handleIncreaseQuantity(product.id); }}>+</button>
@@ -183,8 +195,9 @@ const Store: React.FC = () => {
             <h2>{selectedProduct.name}</h2>
             <p>{selectedProduct.description}</p>
             <p>Pris: {selectedProduct.price} kr</p>
-            {cartQuantities[selectedProduct.id] ? (
-              <div>
+            <p>Lagerstatus: {selectedProduct.stock} st</p>
+      {cartQuantities[selectedProduct.id] ? (
+        <div>
                 <button onClick={() => handleDecreaseQuantity(selectedProduct.id)}>-</button>
                 <span>{cartQuantities[selectedProduct.id]}</span>
                 <button onClick={() => handleIncreaseQuantity(selectedProduct.id)}>+</button>
