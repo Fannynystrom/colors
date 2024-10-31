@@ -18,7 +18,7 @@ const Store: React.FC = () => {
   const [description, setDescription] = useState<string>('');
   const [price, setPrice] = useState<number | ''>('');
   const [products, setProducts] = useState<Array<any>>([]); // state för produkter
-
+  const [cart, setCart] = useState<Array<any>>([]); // state för varukorgen
   const [selectedProduct, setSelectedProduct] = useState<any>(null); // state för vald produkt
 
   useEffect(() => {
@@ -35,6 +35,11 @@ const Store: React.FC = () => {
 
     fetchProducts();
   }, []);
+
+  const handleAddToCart = (product: any) => {
+    setCart([...cart, product]); // lägger till produkten i varukorgen
+    console.log('Produkt tillagd i varukorgen:', product);
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -53,11 +58,10 @@ const Store: React.FC = () => {
 
       if (response.ok) {
         console.log('Product created successfully');
-        // hämtar produkterna igen för att uppdatera listan
         const updatedResponse = await fetch('http://localhost:3001/products');
         const updatedData = await updatedResponse.json();
-        setProducts(updatedData); // uppdaterar produkterna
-        setModalIsOpen(false); // stänger modal efter skapande
+        setProducts(updatedData);
+        setModalIsOpen(false);
         setName('');
         setDescription('');
         setPrice('');
@@ -70,7 +74,7 @@ const Store: React.FC = () => {
   };
 
   const handleProductClick = (product: any) => {
-    setSelectedProduct(product); // den klickade produkten som vald produkt
+    setSelectedProduct(product);
   };
 
   return (
@@ -120,6 +124,7 @@ const Store: React.FC = () => {
               <h3>{product.name}</h3>
               <p>{product.description}</p>
               <p>Pris: {product.price} kr</p>
+              <button onClick={(e) => { e.stopPropagation(); handleAddToCart(product); }}>Lägg till i varukorg</button>
             </li>
           ))}
         </ul>
@@ -132,7 +137,8 @@ const Store: React.FC = () => {
             <h2>{selectedProduct.name}</h2>
             <p>{selectedProduct.description}</p>
             <p>Pris: {selectedProduct.price} kr</p>
-
+            <button onClick={() => handleAddToCart(selectedProduct)}>Lägg till i varukorg</button> 
+            
             {/* kommentarer */}
             <CommentsSection productId={selectedProduct.id} />
 
