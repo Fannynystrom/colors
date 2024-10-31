@@ -5,6 +5,7 @@ import '../../src/styles/store/ModalAdminStyles.css';
 import '../../src/styles/store/ModalProductsStyles.css';
 import '../../src/styles/store/Shop.css';
 import CommentsSection from '../components/CommentSection';
+import { FaEdit } from 'react-icons/fa'; // Lägg till för redigeringspennan
 
 Modal.setAppElement('#root');
 
@@ -20,6 +21,8 @@ const Store: React.FC = () => {
   const [cartQuantities, setCartQuantities] = useState<{ [productId: number]: number }>({});
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [stock, setStock] = useState<number | ''>('');
+  const [editModalIsOpen, setEditModalIsOpen] = useState<boolean>(false); 
+  const [editProduct, setEditProduct] = useState<any>(null); 
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -48,6 +51,43 @@ const Store: React.FC = () => {
       return { id: product.id, name: product.name, price: product.price, quantity };
     });
     authContext?.setCartItems(items);
+  };
+
+  // redigeringsmodalen 
+  const openEditModal = (product: any) => {
+    setEditProduct(product);
+    setName(product.name);
+    setDescription(product.description);
+    setPrice(product.price);
+    setStock(product.stock);
+    setEditModalIsOpen(true);
+  };
+
+  //  produktuppdatering vid redigering
+  const handleUpdateProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editProduct) return;
+
+    const updatedProduct = { name, description, price, stock };
+    try {
+      const response = await fetch(`http://localhost:3001/products/${editProduct.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedProduct),
+      });
+
+      if (response.ok) {
+        setProducts(prevProducts =>
+          prevProducts.map(p => (p.id === editProduct.id ? { ...p, ...updatedProduct } : p))
+        );
+        setEditModalIsOpen(false); 
+        setEditProduct(null); 
+      } else {
+        console.error('Failed to update product');
+      }
+    } catch (error) {
+      console.error('Error updating product:', error);
+    }
   };
 
   //lägger till i varukorg
@@ -292,6 +332,11 @@ const Store: React.FC = () => {
               ) : (
                 <button onClick={(e) => { e.stopPropagation(); handleAddToCart(product); }}>Lägg till i varukorg</button>
               )}
+              
+              {/* Redigeringsikon för admin */}
+              {isAdmin && (
+                <FaEdit onClick={(e) => { e.stopPropagation(); openEditModal(product); }} style={{ cursor: 'pointer' }} />
+              )}
             </li>
           ))}
         </ul>
@@ -320,6 +365,42 @@ const Store: React.FC = () => {
             <button onClick={() => setSelectedProduct(null)}>Stäng</button>
           </div>
         )}
+      </Modal>
+
+      {/* Redigeringsmodal för admin */}
+      <Modal isOpen={editModalIsOpen} onRequestClose={() => setEditModalIsOpen(false)} className="admin-add-product-modal">
+        <h2>Redigera produkt</h2>
+        <form onSubmit={handleUpdateProduct}>
+          <input
+            type="text"
+            placeholder="Namn"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
+          <textarea
+            placeholder="Beskrivning"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            required
+          />
+          <input
+            type="number"
+            placeholder="Pris"
+            value={price}
+            onChange={(e) => setPrice(Number(e.target.value))}
+            required
+          />
+          <input
+            type="number"
+            placeholder="Lagerstatus"
+            value={stock}
+            onChange={(e) => setStock(Number(e.target.value))}
+            required
+          />
+          <button type="submit">Spara ändringar</button>
+        </form>
+        <button onClick={() => setEditModalIsOpen(false)}>Stäng</button>
       </Modal>
     </div>
   );

@@ -184,6 +184,27 @@ app.patch('/products/:id/incrementStock', (req, res) => {
   );
 });
 
+// admin kan uppdatera produkter
+app.patch('/products/:id', (req, res) => {
+  const { id } = req.params;
+  const { name, description, price, stock } = req.body;
+
+  const query = 'UPDATE products SET name = ?, description = ?, price = ?, stock = ? WHERE id = ?';
+  const values = [name, description, price, stock, id];
+
+  connection.query(query, values, (error, results) => {
+    if (error) {
+      console.error('Error updating product:', error);
+      return res.status(500).json({ error: 'Fel vid uppdatering av produkt.' });
+    }
+    if (results.affectedRows === 0) {
+      return res.status(404).json({ error: 'Produkten hittades inte.' });
+    }
+    res.status(200).json({ message: 'Produkten har uppdaterats!' });
+  });
+});
+
+
 
 
 // skapa kommentarer
