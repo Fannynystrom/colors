@@ -38,7 +38,7 @@ const Store: React.FC = () => {
   // uppdaterar totalt antal produkter i varukorgen och värdet sitter i AuthContext
   const updateCartTotalCount = () => {
     const totalCount = Object.values(cartQuantities).reduce((total, quantity) => total + quantity, 0);
-    authContext?.setCartTotalCount(totalCount); // uppdaterar värdet i AuthContext
+    authContext?.setCartTotalCount(totalCount); 
   };
 
   // uppdaterar cartItems i AuthContext baserat på cartQuantities
@@ -50,30 +50,114 @@ const Store: React.FC = () => {
     authContext?.setCartItems(items);
   };
 
-  const handleAddToCart = (product: any) => {
-    setCartQuantities(prev => {
-      const newQuantities = { ...prev, [product.id]: (prev[product.id] || 0) + 1 };
-      return newQuantities;
-    });
-  };
-
-  const handleIncreaseQuantity = (productId: number) => {
-    setCartQuantities(prev => {
-      const newQuantities = { ...prev, [productId]: prev[productId] + 1 };
-      return newQuantities;
-    });
-  };
-
-  const handleDecreaseQuantity = (productId: number) => {
-    setCartQuantities(prev => {
-      const newQuantities = { ...prev };
-      if (newQuantities[productId] > 1) {
-        newQuantities[productId] -= 1;
-      } else {
-        delete newQuantities[productId];
+  //lägger till i varukorg
+  const handleAddToCart = async (product: any) => {
+    const newQuantity = (cartQuantities[product.id] || 0) + 1;
+  
+    if (product.stock >= newQuantity) {
+      setCartQuantities(prev => {
+        const newQuantities = { ...prev, [product.id]: newQuantity };
+        return newQuantities;
+      });
+  
+      try {
+        // minska lagret på servern med endast den senaste ökningen
+        const response = await fetch(`http://localhost:3001/products/${product.id}/decrementStock`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ amount: 1 }), // minskar lagret med 1 för varje klick
+        });
+  
+        if (response.ok) {
+          setProducts(prevProducts =>
+            prevProducts.map(p =>
+              p.id === product.id ? { ...p, stock: p.stock - 1 } : p
+            )
+          );
+        } else {
+          console.error('Failed to decrement stock');
+        }
+      } catch (error) {
+        console.error('Error decrementing stock:', error);
       }
-      return newQuantities;
-    });
+    } else {
+      alert('Inte tillräckligt med lager.');
+    }
+  };
+  
+  //ökar produktantal i varukorg och snackar med servern om de
+  const handleIncreaseQuantity = async (productId: number) => {
+    const product = products.find(p => p.id === productId);
+    if (product && product.stock > (cartQuantities[productId] || 0)) {
+      setCartQuantities(prev => {
+        const newQuantities = { ...prev, [productId]: (prev[productId] || 0) + 1 };
+        return newQuantities;
+      });
+  
+      try {
+        // minskar lagret på servern med 1 eftersom vi lägger till en produkt
+        const response = await fetch(`http://localhost:3001/products/${productId}/decrementStock`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ amount: 1 }),
+        });
+  
+        if (response.ok) {
+          setProducts(prevProducts =>
+            prevProducts.map(p =>
+              p.id === productId ? { ...p, stock: p.stock - 1 } : p
+            )
+          );
+        } else {
+          console.error('Failed to decrement stock');
+        }
+      } catch (error) {
+        console.error('Error decrementing stock:', error);
+      }
+    } else {
+      alert('Inte tillräckligt med lager.');
+    }
+  };
+
+  //handleDecreaseQuantity ökar/minskar och snackar med servern om de
+  const handleDecreaseQuantity = async (productId: number) => {
+    if (cartQuantities[productId] > 0) {
+      setCartQuantities(prev => {
+        const newQuantities = { ...prev };
+        newQuantities[productId] -= 1;
+        if (newQuantities[productId] === 0) {
+          delete newQuantities[productId];
+        }
+        return newQuantities;
+      });
+  
+      try {
+        // ökar lagret på servern med 1 eftersom vi tar bort en produkt från varukorgen
+        const response = await fetch(`http://localhost:3001/products/${productId}/incrementStock`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ amount: 1 }),
+        });
+  
+        if (response.ok) {
+          setProducts(prevProducts =>
+            prevProducts.map(p =>
+              p.id === productId ? { ...p, stock: p.stock + 1 } : p
+            )
+          );
+        } else {
+          console.error('Failed to increment stock');
+        }
+      } catch (error) {
+        console.error('Error incrementing stock:', error);
+      }
+    }
   };
 
   // anropar updateCartTotalCount och updateCartItems varje gång cartQuantities ändras
@@ -81,6 +165,33 @@ const Store: React.FC = () => {
     updateCartTotalCount();
     updateCartItems();
   }, [cartQuantities]);
+
+  //  återställer lagersaldo för varukorgens produkter
+  const resetCartStock = async () => {
+    for (const [productId, quantity] of Object.entries(cartQuantities)) {
+      if (quantity > 0) {
+        try {
+          await fetch(`http://localhost:3001/products/${productId}/incrementStock`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ amount: quantity }),
+          });
+        } catch (error) {
+          console.error('Error resetting stock for product:', productId);
+        }
+      }
+    }
+    setCartQuantities({});
+  };
+
+  // anropar resetCartStock vid utloggning eller när komponenten avmonteras
+  useEffect(() => {
+    return () => {
+      resetCartStock(); 
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -104,7 +215,7 @@ const Store: React.FC = () => {
         setName('');
         setDescription('');
         setPrice('');
-        setStock(''); // återställer lagerstatus
+        setStock(''); 
       } else {
         console.error('Failed to create product:', response.statusText);
       }
@@ -112,7 +223,6 @@ const Store: React.FC = () => {
       console.error('Error:', error);
     }
   };
-  
 
   const handleProductClick = (product: any) => {
     setSelectedProduct(product);
@@ -157,8 +267,7 @@ const Store: React.FC = () => {
            value={stock}
            onChange={(e) => setStock(Number(e.target.value))}
            required
-  />
-          
+          />
           <button type="submit">Skapa produkt</button>
         </form>
         <button onClick={() => setModalIsOpen(false)}>Stäng</button>
@@ -174,8 +283,8 @@ const Store: React.FC = () => {
               <p>{product.description}</p>
               <p>Pris: {product.price} kr</p>
               <p>Lagerstatus: {product.stock} st</p>
-      {cartQuantities[product.id] ? (
-        <div>
+              {cartQuantities[product.id] ? (
+                <div>
                   <button onClick={(e) => { e.stopPropagation(); handleDecreaseQuantity(product.id); }}>-</button>
                   <span>{cartQuantities[product.id]}</span>
                   <button onClick={(e) => { e.stopPropagation(); handleIncreaseQuantity(product.id); }}>+</button>
@@ -196,8 +305,8 @@ const Store: React.FC = () => {
             <p>{selectedProduct.description}</p>
             <p>Pris: {selectedProduct.price} kr</p>
             <p>Lagerstatus: {selectedProduct.stock} st</p>
-      {cartQuantities[selectedProduct.id] ? (
-        <div>
+            {cartQuantities[selectedProduct.id] ? (
+              <div>
                 <button onClick={() => handleDecreaseQuantity(selectedProduct.id)}>-</button>
                 <span>{cartQuantities[selectedProduct.id]}</span>
                 <button onClick={() => handleIncreaseQuantity(selectedProduct.id)}>+</button>

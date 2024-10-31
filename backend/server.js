@@ -146,6 +146,45 @@ app.post('/products', async (req, res) => {
   }
 });
 
+//  minska lagerstatus
+app.patch('/products/:id/decrementStock', (req, res) => {
+  const { id } = req.params;
+  const decrementAmount = req.body.amount || 1; // minskar med en åt gången
+
+  connection.query(
+    'UPDATE products SET stock = stock - ? WHERE id = ? AND stock >= ?',
+    [decrementAmount, id, decrementAmount],
+    (err, result) => {
+      if (err) {
+        return res.status(500).json({ error: 'Error updating stock' });
+      }
+      if (result.affectedRows === 0) {
+        return res.status(400).json({ error: 'Not enough stock or invalid product ID' });
+      }
+      res.json({ message: 'Stock updated successfully' });
+    }
+  );
+});
+
+
+// öka lagerstatus
+app.patch('/products/:id/incrementStock', (req, res) => {
+  const { id } = req.params;
+  const incrementAmount = req.body.amount || 1; // ökar med en 
+
+  connection.query(
+    'UPDATE products SET stock = stock + ? WHERE id = ?',
+    [incrementAmount, id],
+    (err, result) => {
+      if (err) {
+        return res.status(500).json({ error: 'Error updating stock' });
+      }
+      res.json({ message: 'Stock restored successfully' });
+    }
+  );
+});
+
+
 
 // skapa kommentarer
 app.post('/comments', (req, res) => {
