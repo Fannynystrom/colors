@@ -204,6 +204,21 @@ app.patch('/products/:id', (req, res) => {
   });
 });
 
+// ta bort en produkt
+app.delete('/products/:id', (req, res) => {
+  const { id } = req.params;
+
+  connection.query('DELETE FROM products WHERE id = ?', [id], (err, results) => {
+    if (err) {
+      console.error('Error deleting product:', err);
+      return res.status(500).json({ error: 'Fel vid borttagning av produkt.' });
+    }
+    if (results.affectedRows === 0) {
+      return res.status(404).json({ error: 'Produkten hittades inte.' });
+    }
+    res.status(200).json({ message: 'Produkten har tagits bort!' });
+  });
+});
 
 
 

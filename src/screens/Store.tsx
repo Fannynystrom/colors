@@ -283,8 +283,26 @@ const Store: React.FC = () => {
     setSelectedProduct(product);
   };
 
-
-
+//radera produkt
+  const handleDeleteProduct = async (productId: number) => {
+    try {
+      const response = await fetch(`http://localhost:3001/products/${productId}`, {
+        method: 'DELETE',
+      });
+  
+      if (response.ok) {
+        // Uppdatera produktlistan lokalt
+        setProducts((prevProducts) => prevProducts.filter((product) => product.id !== productId));
+        setEditModalIsOpen(false);
+        setEditProduct(null);
+      } else {
+        console.error('Failed to delete product');
+      }
+    } catch (error) {
+      console.error('Error deleting product:', error);
+    }
+  };
+  
 
 
   return (
@@ -337,10 +355,9 @@ const Store: React.FC = () => {
   min="0"
   required
 />
-
-
-          <button type="submit">Skapa produkt</button>
+ <button type="submit">Skapa produkt</button>
         </form>
+  
         <button onClick={() => setModalIsOpen(false)}>Stäng</button>
       </Modal>
 
@@ -352,7 +369,7 @@ const Store: React.FC = () => {
             <li key={product.id} onClick={() => handleProductClick(product)}>
                 {/* Redigeringsikon för admin */}
                 {isAdmin && (
-                <FaEdit onClick={(e) => { e.stopPropagation(); openEditModal(product); }} style={{ cursor: 'pointer', float: 'right' }} />
+                <FaEdit onClick={(e) => { e.stopPropagation(); openEditModal(product); }} style={{ cursor: 'pointer', float: 'right', fontSize: '1.3em' }} />
               )}
               <h3>{product.name}</h3>
               <p>{product.description}</p>
@@ -439,9 +456,16 @@ const Store: React.FC = () => {
       min="0"
       required
      />
-
-          <button type="submit">Spara ändringar</button>
+        <button type="submit">Spara ändringar</button>
         </form>
+
+        {/* ta bort produkt */}
+        <button 
+    onClick={() => handleDeleteProduct(editProduct.id)} 
+    style={{ color: 'red', marginTop: '10px' }}
+  >
+    Ta bort produkt
+  </button>
         <button onClick={() => setEditModalIsOpen(false)}>Stäng</button>
       </Modal>
     </div>
