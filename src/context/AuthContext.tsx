@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect } from 'react';
 
+// Gränssnitt för en produkt i varukorgen
 interface CartItem {
   id: number;
   name: string;
@@ -25,6 +26,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [role, setRole] = useState<string>('');
   const [cartTotalCount, setCartTotalCount] = useState<number>(0); //  state för antal produkter i kassan
   const [cartItems, setCartItems] = useState<CartItem[]>([]); // state för produkterna i varukorgen
+
+  //  återställer lagersaldot för produkterna i varukorgen
+  const resetCartStock = async () => {
+    for (const item of cartItems) {
+      try {
+        await fetch(`http://localhost:3001/products/${item.id}/incrementStock`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ amount: item.quantity }),
+        });
+      } catch (error) {
+        console.error('Error resetting stock for product:', item.id);
+      }
+    }
+    setCartItems([]); // Rensa varukorgen lokalt
+    setCartTotalCount(0); // återställ antalet produkter i varukorgen
+  };
 
   useEffect(() => {
     const storedUser = sessionStorage.getItem('user');
@@ -69,11 +89,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     sessionStorage.setItem('user', JSON.stringify({ userId, role: userRole }));
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await resetCartStock(); // återställer lagersaldot när användaren loggar ut
     setIsAuthenticated(false);
     setRole('');
-    setCartTotalCount(0); // nollställer antal produkter vid utloggning
-    setCartItems([]); // nollställer varukorgen vid utloggning
     sessionStorage.removeItem('user');
   };
 
