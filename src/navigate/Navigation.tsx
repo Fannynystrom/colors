@@ -1,8 +1,9 @@
+
+import '../styles/NavigationStyles.css';
 import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faShoppingCart } from '@fortawesome/free-solid-svg-icons';
-import '../styles/NavigationStyles.css';
 import { AuthContext } from '../context/AuthContext';
 
 function Navigation() {
@@ -12,7 +13,7 @@ function Navigation() {
     return null;
   }
 
-  const { isAuthenticated, role, logout } = authContext;
+  const { isAuthenticated, role, logout, cartTotalCount } = authContext;
 
   return (
     <nav>
@@ -32,10 +33,10 @@ function Navigation() {
               <Link to="/admin">Admin</Link>
             </li>
           )}
-          
           <li className="checkout-icon">
-            <Link to="/pay">
+            <Link to="/pay" className="cart-link">
               <FontAwesomeIcon icon={faShoppingCart} />
+              {cartTotalCount > 0 && <span className="cart-count">{cartTotalCount}</span>}
             </Link>
           </li>
         </ul>

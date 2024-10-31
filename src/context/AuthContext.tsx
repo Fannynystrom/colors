@@ -5,13 +5,18 @@ interface AuthContextType {
   role: string;
   login: (userId: number, userRole: string) => void;
   logout: () => void;
+  cartTotalCount: number; // antal produkter tillagda
+  setCartTotalCount: React.Dispatch<React.SetStateAction<number>>; 
 }
+
+
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [role, setRole] = useState<string>('');
+  const [cartTotalCount, setCartTotalCount] = useState<number>(0); //  state för antal produkter i kassan
 
   useEffect(() => {
     const storedUser = sessionStorage.getItem('user');
@@ -29,15 +34,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       window.location.href = '/'; // skickas till login
     };
 
- // timer för inaktivitet (5 minuter = 300000 ms)
-let inactivityTimer: NodeJS.Timeout = setTimeout(handleLogoutDueToInactivity, 300000);
+    // timer för inaktivitet (5 minuter = 300000 ms)
+    let inactivityTimer: NodeJS.Timeout = setTimeout(handleLogoutDueToInactivity, 300000);
 
-// timern återställs vid aktivitet 
-const resetTimer = () => {
-  clearTimeout(inactivityTimer);
-  inactivityTimer = setTimeout(handleLogoutDueToInactivity, 300000);
-};
-
+    // timern återställs vid aktivitet 
+    const resetTimer = () => {
+      clearTimeout(inactivityTimer);
+      inactivityTimer = setTimeout(handleLogoutDueToInactivity, 300000);
+    };
 
     // eventlyssnare för att upptäcka aktivitet om man rör mus elr trycker på tangent
     window.addEventListener('mousemove', resetTimer);
@@ -60,11 +64,12 @@ const resetTimer = () => {
   const logout = () => {
     setIsAuthenticated(false);
     setRole('');
+    setCartTotalCount(0); // nollställer antal produkter vid utloggning
     sessionStorage.removeItem('user');
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, role, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, role, login, logout, cartTotalCount, setCartTotalCount }}>
       {children}
     </AuthContext.Provider>
   );

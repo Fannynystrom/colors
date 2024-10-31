@@ -17,7 +17,6 @@ const Store: React.FC = () => {
   const [description, setDescription] = useState<string>('');
   const [price, setPrice] = useState<number | ''>('');
   const [products, setProducts] = useState<Array<any>>([]);
-  const [cart, setCart] = useState<Array<any>>([]);
   const [cartQuantities, setCartQuantities] = useState<{ [productId: number]: number }>({});
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
 
@@ -35,20 +34,24 @@ const Store: React.FC = () => {
     fetchProducts();
   }, []);
 
+  // uppdaterar totalt antal produkter i varukorgen och värdet sitter i AuthContext
+  const updateCartTotalCount = () => {
+    const totalCount = Object.values(cartQuantities).reduce((total, quantity) => total + quantity, 0);
+    authContext?.setCartTotalCount(totalCount); // uppdaterar värdet i AuthContext
+  };
+
   const handleAddToCart = (product: any) => {
-    setCart([...cart, product]);
-    setCartQuantities(prev => ({
-      ...prev,
-      [product.id]: (prev[product.id] || 0) + 1
-    }));
-    console.log('Produkt tillagd i varukorgen:', product);
+    setCartQuantities(prev => {
+      const newQuantities = { ...prev, [product.id]: (prev[product.id] || 0) + 1 };
+      return newQuantities;
+    });
   };
 
   const handleIncreaseQuantity = (productId: number) => {
-    setCartQuantities(prev => ({
-      ...prev,
-      [productId]: prev[productId] + 1
-    }));
+    setCartQuantities(prev => {
+      const newQuantities = { ...prev, [productId]: prev[productId] + 1 };
+      return newQuantities;
+    });
   };
 
   const handleDecreaseQuantity = (productId: number) => {
@@ -58,17 +61,20 @@ const Store: React.FC = () => {
         newQuantities[productId] -= 1;
       } else {
         delete newQuantities[productId];
-        setCart(cart.filter(product => product.id !== productId));
       }
       return newQuantities;
     });
   };
 
+  // anropar updateCartTotalCount varje gång cartQuantities ändras
+  useEffect(() => {
+    updateCartTotalCount();
+  }, [cartQuantities]);
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const productData = { name, description, price };
-    console.log('Submitting product:', productData);
 
     try {
       const response = await fetch('http://localhost:3001/products', {
@@ -179,7 +185,6 @@ const Store: React.FC = () => {
             
             {/* kommentarer */}
             <CommentsSection productId={selectedProduct.id} />
-
             <button onClick={() => setSelectedProduct(null)}>Stäng</button>
           </div>
         )}
