@@ -6,7 +6,6 @@ import '../../src/styles/store/ModalProductsStyles.css';
 import '../../src/styles/store/Shop.css';
 import CommentsSection from '../components/CommentSection';
 
-// modal som root element
 Modal.setAppElement('#root');
 
 const Store: React.FC = () => {
@@ -17,12 +16,12 @@ const Store: React.FC = () => {
   const [name, setName] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   const [price, setPrice] = useState<number | ''>('');
-  const [products, setProducts] = useState<Array<any>>([]); // state för produkter
-  const [cart, setCart] = useState<Array<any>>([]); // state för varukorgen
-  const [selectedProduct, setSelectedProduct] = useState<any>(null); // state för vald produkt
+  const [products, setProducts] = useState<Array<any>>([]);
+  const [cart, setCart] = useState<Array<any>>([]);
+  const [cartQuantities, setCartQuantities] = useState<{ [productId: number]: number }>({});
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
 
   useEffect(() => {
-    // hämtar produkter från servern
     const fetchProducts = async () => {
       try {
         const response = await fetch('http://localhost:3001/products');
@@ -37,15 +36,39 @@ const Store: React.FC = () => {
   }, []);
 
   const handleAddToCart = (product: any) => {
-    setCart([...cart, product]); // lägger till produkten i varukorgen
+    setCart([...cart, product]);
+    setCartQuantities(prev => ({
+      ...prev,
+      [product.id]: (prev[product.id] || 0) + 1
+    }));
     console.log('Produkt tillagd i varukorgen:', product);
+  };
+
+  const handleIncreaseQuantity = (productId: number) => {
+    setCartQuantities(prev => ({
+      ...prev,
+      [productId]: prev[productId] + 1
+    }));
+  };
+
+  const handleDecreaseQuantity = (productId: number) => {
+    setCartQuantities(prev => {
+      const newQuantities = { ...prev };
+      if (newQuantities[productId] > 1) {
+        newQuantities[productId] -= 1;
+      } else {
+        delete newQuantities[productId];
+        setCart(cart.filter(product => product.id !== productId));
+      }
+      return newQuantities;
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const productData = { name, description, price };
-    console.log('Submitting product:', productData); // loggning
+    console.log('Submitting product:', productData);
 
     try {
       const response = await fetch('http://localhost:3001/products', {
@@ -57,7 +80,6 @@ const Store: React.FC = () => {
       });
 
       if (response.ok) {
-        console.log('Product created successfully');
         const updatedResponse = await fetch('http://localhost:3001/products');
         const updatedData = await updatedResponse.json();
         setProducts(updatedData);
@@ -124,7 +146,15 @@ const Store: React.FC = () => {
               <h3>{product.name}</h3>
               <p>{product.description}</p>
               <p>Pris: {product.price} kr</p>
-              <button onClick={(e) => { e.stopPropagation(); handleAddToCart(product); }}>Lägg till i varukorg</button>
+              {cartQuantities[product.id] ? (
+                <div>
+                  <button onClick={(e) => { e.stopPropagation(); handleDecreaseQuantity(product.id); }}>-</button>
+                  <span>{cartQuantities[product.id]}</span>
+                  <button onClick={(e) => { e.stopPropagation(); handleIncreaseQuantity(product.id); }}>+</button>
+                </div>
+              ) : (
+                <button onClick={(e) => { e.stopPropagation(); handleAddToCart(product); }}>Lägg till i varukorg</button>
+              )}
             </li>
           ))}
         </ul>
@@ -137,7 +167,15 @@ const Store: React.FC = () => {
             <h2>{selectedProduct.name}</h2>
             <p>{selectedProduct.description}</p>
             <p>Pris: {selectedProduct.price} kr</p>
-            <button onClick={() => handleAddToCart(selectedProduct)}>Lägg till i varukorg</button> 
+            {cartQuantities[selectedProduct.id] ? (
+              <div>
+                <button onClick={() => handleDecreaseQuantity(selectedProduct.id)}>-</button>
+                <span>{cartQuantities[selectedProduct.id]}</span>
+                <button onClick={() => handleIncreaseQuantity(selectedProduct.id)}>+</button>
+              </div>
+            ) : (
+              <button onClick={() => handleAddToCart(selectedProduct)}>Lägg till i varukorg</button>
+            )}
             
             {/* kommentarer */}
             <CommentsSection productId={selectedProduct.id} />
