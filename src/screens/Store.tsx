@@ -5,6 +5,8 @@ import '../../src/styles/store/ModalAdminStyles.css';
 import '../../src/styles/store/ModalProductsStyles.css';
 import '../../src/styles/store/Shop.css';
 import CommentsSection from '../components/CommentSection';
+import ProductList from '../components/ProductList';
+
 import ProductModal from '../components/ProductModal';
 import { FaEdit } from 'react-icons/fa'; 
 
@@ -363,34 +365,17 @@ const Store: React.FC = () => {
       </Modal>
 
       {/* listan med produkter */}
-      <div>
-        <h2>Produkter</h2>
-        <ul>
-          {products.map(product => (
-            <li key={product.id} onClick={() => handleProductClick(product)}>
-                {/* Redigeringsikon för admin */}
-                {isAdmin && (
-                <FaEdit onClick={(e) => { e.stopPropagation(); openEditModal(product); }} style={{ cursor: 'pointer', float: 'right', fontSize: '1.3em' }} />
-              )}
-              <h3>{product.name}</h3>
-              <p>{product.description}</p>
-              <p>Pris: {product.price} kr</p>
-              <p>Lagerstatus: {product.stock} st</p>
-              {cartQuantities[product.id] ? (
-                <div className="quantity-control">
-                  <button onClick={(e) => { e.stopPropagation(); handleDecreaseQuantity(product.id); }}>-</button>
-                  <span>{cartQuantities[product.id]}</span>
-                  <button onClick={(e) => { e.stopPropagation(); handleIncreaseQuantity(product.id); }}>+</button>
-                </div>
-              ) : (
-                <button onClick={(e) => { e.stopPropagation(); handleAddToCart(product); }}>Lägg till i varukorg</button>
-              )}
-              
-            
-            </li>
-          ))}
-        </ul>
-      </div>
+      <ProductList
+           products={products}
+           isAdmin={isAdmin}
+           cartQuantities={cartQuantities}
+           handleProductClick={handleProductClick}
+           handleDecreaseQuantity={handleDecreaseQuantity}
+           handleIncreaseQuantity={handleIncreaseQuantity}
+           handleAddToCart={handleAddToCart}
+           openEditModal={openEditModal}
+         />
+
 
       {/* modal för vald produkt */}
       <ProductModal
