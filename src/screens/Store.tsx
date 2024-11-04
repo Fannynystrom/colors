@@ -5,7 +5,8 @@ import '../../src/styles/store/ModalAdminStyles.css';
 import '../../src/styles/store/ModalProductsStyles.css';
 import '../../src/styles/store/Shop.css';
 import CommentsSection from '../components/CommentSection';
-import { FaEdit } from 'react-icons/fa'; // Lägg till för redigeringspennan
+import ProductModal from '../components/ProductModal';
+import { FaEdit } from 'react-icons/fa'; 
 
 Modal.setAppElement('#root');
 
@@ -392,29 +393,15 @@ const Store: React.FC = () => {
       </div>
 
       {/* modal för vald produkt */}
-      <Modal isOpen={!!selectedProduct} onRequestClose={() => setSelectedProduct(null)} className="product-details-modal">
-  {selectedProduct && (
-    <div className='ViewModal'>
-      <h2>{selectedProduct.name}</h2>
-      <p>{selectedProduct.description}</p>
-      <p>Pris: {selectedProduct.price} kr</p>
-      <p>Lagerstatus: {selectedProduct.stock} st</p>
-      {cartQuantities[selectedProduct.id] ? (
-        <div className="quantity-control">
-          <button className="decrease-btn" onClick={() => handleDecreaseQuantity(selectedProduct.id)}>-</button>
-          <span>{cartQuantities[selectedProduct.id]}</span>
-          <button className="increase-btn" onClick={() => handleIncreaseQuantity(selectedProduct.id)}>+</button>
-        </div>
-      ) : (
-<div className="button-container">
-    <button className="add-to-cart-btn">Lägg till i varukorg</button>
-</div>
-      )}
-      <CommentsSection productId={selectedProduct.id} />
-      <button className="close-modal-btn" onClick={() => setSelectedProduct(null)}>Stäng</button>
-    </div>
-  )}
-</Modal>
+      <ProductModal
+           isOpen={!!selectedProduct}
+           onRequestClose={() => setSelectedProduct(null)}
+           product={selectedProduct}
+           cartQuantities={cartQuantities}
+           handleDecreaseQuantity={handleDecreaseQuantity}
+           handleIncreaseQuantity={handleIncreaseQuantity}
+           handleAddToCart={handleAddToCart}
+           />
 
 
       {/* Redigeringsmodal för admin */}
