@@ -393,28 +393,29 @@ const Store: React.FC = () => {
 
       {/* modal för vald produkt */}
       <Modal isOpen={!!selectedProduct} onRequestClose={() => setSelectedProduct(null)} className="product-details-modal">
-        {selectedProduct && (
-          <div>
-            <h2>{selectedProduct.name}</h2>
-            <p>{selectedProduct.description}</p>
-            <p>Pris: {selectedProduct.price} kr</p>
-            <p>Lagerstatus: {selectedProduct.stock} st</p>
-            {cartQuantities[selectedProduct.id] ? (
-              <div>
-                <button onClick={() => handleDecreaseQuantity(selectedProduct.id)}>-</button>
-                <span>{cartQuantities[selectedProduct.id]}</span>
-                <button onClick={() => handleIncreaseQuantity(selectedProduct.id)}>+</button>
-              </div>
-            ) : (
-              <button onClick={() => handleAddToCart(selectedProduct)}>Lägg till i varukorg</button>
-            )}
-            
-            {/* kommentarer */}
-            <CommentsSection productId={selectedProduct.id} />
-            <button onClick={() => setSelectedProduct(null)}>Stäng</button>
-          </div>
-        )}
-      </Modal>
+  {selectedProduct && (
+    <div className='ViewModal'>
+      <h2>{selectedProduct.name}</h2>
+      <p>{selectedProduct.description}</p>
+      <p>Pris: {selectedProduct.price} kr</p>
+      <p>Lagerstatus: {selectedProduct.stock} st</p>
+      {cartQuantities[selectedProduct.id] ? (
+        <div className="quantity-control">
+          <button className="decrease-btn" onClick={() => handleDecreaseQuantity(selectedProduct.id)}>-</button>
+          <span>{cartQuantities[selectedProduct.id]}</span>
+          <button className="increase-btn" onClick={() => handleIncreaseQuantity(selectedProduct.id)}>+</button>
+        </div>
+      ) : (
+<div className="button-container">
+    <button className="add-to-cart-btn">Lägg till i varukorg</button>
+</div>
+      )}
+      <CommentsSection productId={selectedProduct.id} />
+      <button className="close-modal-btn" onClick={() => setSelectedProduct(null)}>Stäng</button>
+    </div>
+  )}
+</Modal>
+
 
       {/* Redigeringsmodal för admin */}
       <Modal isOpen={editModalIsOpen} onRequestClose={() => setEditModalIsOpen(false)} className="admin-add-product-modal">

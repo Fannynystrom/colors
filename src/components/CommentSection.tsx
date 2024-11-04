@@ -74,7 +74,10 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ productId }) => {
           onChange={(e) => setNewComment(e.target.value)}
           required
         />
-        <button type="submit">Skicka kommentar</button>
+        <div className="comment-button-container">
+    <button className="submit-comment-btn">Lägg till kommentar</button>
+</div>
+
       </form>
     </div>
   );
