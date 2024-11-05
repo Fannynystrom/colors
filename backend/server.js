@@ -18,10 +18,28 @@ const loginAttempts = {};
 const MAX_ATTEMPTS = 5;
 const TIMEOUT_PERIOD = 30 * 1000; // 30 sekunder
 
+// hämtar de 100 senaste inloggningsförsöken
+app.get('/login-logs', (req, res) => {
+  connection.query(
+    'SELECT * FROM login_logs ORDER BY timestamp DESC LIMIT 100',
+    (err, results) => {
+      if (err) {
+        console.error('Error fetching login logs:', err);
+        return res.status(500).json({ error: 'Failed to fetch login logs' });
+      }
+      res.json(results);
+    }
+  );
+});
+
 // inloggning
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
-  const ip = req.ip; // hämtar IP-adressen från förfrågan
+  
+  // kontrollera både x-forwarded-for och req.ip för att få rätt IP
+  const ip = req.headers['x-forwarded-for'] || req.ip;
+  const actualIp = ip === '::1' ? '127.0.0.1' : ip; // omvandlar ::1 till 127.0.0.1 för lokal utveckling
+  
   const userAgent = req.get('User-Agent'); // hämtar User-Agent från förfrågan
 
   // kollar om användaren redan har gjort för många försök
@@ -38,7 +56,7 @@ app.post('/login', (req, res) => {
   // Kollar om användarnamnet finns
   connection.query('SELECT * FROM users WHERE username = ?', [username], (err, results) => {
     if (err) {
-      logLoginAttempt(username, false, ip, userAgent); // loggar misslyckat inloggningsförsök
+      logLoginAttempt(username, false, actualIp, userAgent); // loggar misslyckat inloggningsförsök
       return res.status(500).send('Server error.');
     }
     
@@ -50,7 +68,7 @@ app.post('/login', (req, res) => {
         loginAttempts[username].attempts += 1;
         loginAttempts[username].lastAttempt = Date.now();
       }
-      logLoginAttempt(username, false, ip, userAgent); // loggar misslyckat inloggningsförsök på grund av felaktigt användarnamn
+      logLoginAttempt(username, false, actualIp, userAgent); // loggar misslyckat inloggningsförsök på grund av felaktigt användarnamn
       return res.status(401).send('Felaktigt användarnamn eller lösenord.');
     }
 
@@ -65,7 +83,7 @@ app.post('/login', (req, res) => {
           loginAttempts[username].attempts += 1;
           loginAttempts[username].lastAttempt = Date.now();
         }
-        logLoginAttempt(username, false, ip, userAgent); // loggar misslyckat inloggningsförsök på grund av felaktigt lösenord
+        logLoginAttempt(username, false, actualIp, userAgent); // loggar misslyckat inloggningsförsök på grund av felaktigt lösenord
         return res.status(401).send('Felaktigt användarnamn eller lösenord.');
       }
 
@@ -74,11 +92,12 @@ app.post('/login', (req, res) => {
         delete loginAttempts[username];
       }
 
-      logLoginAttempt(username, true, ip, userAgent); // loggar lyckat inloggningsförsök
+      logLoginAttempt(username, true, actualIp, userAgent); // loggar lyckat inloggningsförsök
       res.json({ message: 'Inloggning lyckades!', userId: user.id, role: user.role });
     });
   });
 });
+
 
 // registrering
 app.post('/register', async (req, res) => {
