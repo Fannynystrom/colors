@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import '../styles/AdminLogs.css';
+
 
 type LogEntry = {
   id: number;
@@ -49,7 +51,7 @@ const Admin = () => {
               <td>{new Date(log.timestamp).toLocaleString()}</td>
               <td>{log.username}</td>
               <td>{log.ip_address}</td>
-              <td>{log.user_agent}</td>
+              <td className="user-agent">{log.user_agent}</td> 
               <td>{log.success ? 'Ja' : 'Nej'}</td>
             </tr>
           ))}
@@ -57,6 +59,7 @@ const Admin = () => {
       </table>
     </div>
   );
+  
 };
 
 export default Admin;
