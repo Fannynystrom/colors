@@ -6,9 +6,8 @@ import '../../src/styles/store/ModalProductsStyles.css';
 import '../../src/styles/store/Shop.css';
 import CommentsSection from '../components/CommentSection';
 import ProductList from '../components/ProductList';
-
 import ProductModal from '../components/ProductModal';
-import { FaEdit } from 'react-icons/fa'; 
+import { FaEdit } from 'react-icons/fa';
 
 Modal.setAppElement('#root');
 
@@ -21,7 +20,6 @@ const Store: React.FC = () => {
   const [description, setDescription] = useState<string>('');
   const [price, setPrice] = useState<number | ''>('');
   const [products, setProducts] = useState<Array<any>>([]);
-  const [cartQuantities, setCartQuantities] = useState<{ [productId: number]: number }>({});
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [stock, setStock] = useState<number | ''>('');
   const [editModalIsOpen, setEditModalIsOpen] = useState<boolean>(false);
@@ -43,22 +41,87 @@ const Store: React.FC = () => {
     fetchProducts();
   }, []);
 
-  // uppdaterar totalt antal produkter i varukorgen och värdet sitter i AuthContext
-  const updateCartTotalCount = () => {
-    const totalCount = Object.values(cartQuantities).reduce((total, quantity) => total + quantity, 0);
-    authContext?.setCartTotalCount(totalCount);
+  // lägg till en produkt i varukorgen och minska lagersaldot
+  const handleAddToCart = async (product: any) => {
+    if (!authContext) return;
+
+    if (product.stock <= 0) {
+      alert('Inte tillräckligt med lager.');
+      return;
+    }
+
+    // lägg till i varukorgen via AuthContext
+    authContext.addToCart(product);
+
+    // minskar lagersaldot på servern
+    try {
+      const response = await fetch(`http://localhost:3001/products/${product.id}/decrementStock`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ amount: 1 }),
+      });
+
+      if (response.ok) {
+        setProducts(prevProducts =>
+          prevProducts.map(p => (p.id === product.id ? { ...p, stock: p.stock - 1 } : p))
+        );
+        startReservationTimer(product.id);
+      } else {
+        console.error('Failed to decrement stock');
+      }
+    } catch (error) {
+      console.error('Error decrementing stock:', error);
+    }
   };
 
-  // uppdaterar cartItems i AuthContext baserat på cartQuantities
-  const updateCartItems = () => {
-    const items = Object.entries(cartQuantities).map(([productId, quantity]) => {
-      const product = products.find((p) => p.id === Number(productId));
-      return { id: product.id, name: product.name, price: product.price, quantity };
-    });
-    authContext?.setCartItems(items);
+  // tar bort en produkt från varukorgen och ökar lagersaldot
+  const handleRemoveFromCart = async (productId: number, quantity: number = 1) => {
+    if (!authContext) return;
+  
+    // ta bort från varukorgen via AuthContext
+    await authContext.removeFromCart(productId, quantity);
+  
+    // öka lagersaldot på servern
+    try {
+      const response = await fetch(`http://localhost:3001/products/${productId}/incrementStock`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ amount: quantity }),
+      });
+  
+      if (response.ok) {
+        const data = await response.json();
+        setProducts(prevProducts =>
+          prevProducts.map(p => (p.id === productId ? { ...p, stock: data.stock } : p))
+        );
+        clearTimeout(reservationTimers.current[productId]);
+        console.log(`Ökat lagersaldo för produkt ID ${productId} med ${quantity}`);
+      } else {
+        const errorData = await response.json();
+        console.error('Misslyckades med att öka lagersaldo:', errorData.error);
+      }
+    } catch (error) {
+      console.error('Fel vid ökning av lagersaldo:', error);
+    }
   };
+  
+  
 
-  // redigeringsmodalen 
+  // timer för att automatiskt ta bort reserverade produkter
+  const startReservationTimer = (productId: number) => {
+    clearTimeout(reservationTimers.current[productId]);
+  
+    reservationTimers.current[productId] = setTimeout(async () => {
+      await handleRemoveFromCart(productId);
+    }, 60000); // 1 minut
+  };
+  
+
+  // redigeringsmodalen
   const openEditModal = (product: any) => {
     setEditProduct(product);
     setName(product.name);
@@ -68,7 +131,7 @@ const Store: React.FC = () => {
     setEditModalIsOpen(true);
   };
 
-  // Produktuppdatering vid redigering
+  // produktuppdatering vid redigering
   const handleUpdateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editProduct) return;
@@ -82,8 +145,8 @@ const Store: React.FC = () => {
       });
 
       if (response.ok) {
-        setProducts((prevProducts) =>
-          prevProducts.map((p) => (p.id === editProduct.id ? { ...p, ...updatedProduct } : p))
+        setProducts(prevProducts =>
+          prevProducts.map(p => (p.id === editProduct.id ? { ...p, ...updatedProduct } : p))
         );
         setEditModalIsOpen(false);
         setEditProduct(null);
@@ -95,162 +158,7 @@ const Store: React.FC = () => {
     }
   };
 
-  //lägger till i varukorg
-  const handleAddToCart = async (product: any) => {
-    const newQuantity = (cartQuantities[product.id] || 0) + 1;
-
-    if (product.stock >= newQuantity) {
-      setCartQuantities((prev) => {
-        const newQuantities = { ...prev, [product.id]: newQuantity };
-        return newQuantities;
-      });
-
-      try {
-        // minska lagret på servern med endast den senaste ökningen
-        const response = await fetch(`http://localhost:3001/products/${product.id}/decrementStock`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ amount: 1 }), // Minskar lagret med 1 för varje klick
-        });
-
-        if (response.ok) {
-          setProducts((prevProducts) =>
-            prevProducts.map((p) => (p.id === product.id ? { ...p, stock: p.stock - 1 } : p))
-          );
-          startReservationTimer(product.id); // Startar timer för reservation
-        } else {
-          console.error('Failed to decrement stock');
-        }
-      } catch (error) {
-        console.error('Error decrementing stock:', error);
-      }
-    } else {
-      alert('Inte tillräckligt med lager.');
-    }
-  };
-
-  // Timer för att automatiskt ta bort reserverade produkter
-  const startReservationTimer = (productId: number) => {
-    clearTimeout(reservationTimers.current[productId]);
-
-    reservationTimers.current[productId] = setTimeout(() => {
-      handleRemoveReservation(productId);
-    }, 60000); // 1 minut
-  };
-
-  const handleRemoveReservation = (productId: number) => {
-    const quantity = cartQuantities[productId];
-    if (quantity) {
-      handleDecreaseQuantity(productId, quantity); // Återställ tillgänglig lagernivå
-    }
-  };
-
-  // Ökar produktantal i varukorg och snackar med servern om de
-  const handleIncreaseQuantity = async (productId: number) => {
-    const product = products.find((p) => p.id === productId);
-    if (product && product.stock > (cartQuantities[productId] || 0)) {
-      setCartQuantities((prev) => {
-        const newQuantities = { ...prev, [productId]: (prev[productId] || 0) + 1 };
-        return newQuantities;
-      });
-
-      try {
-        // minskar lagret på servern med 1 eftersom vi lägger till en produkt
-        const response = await fetch(`http://localhost:3001/products/${productId}/decrementStock`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ amount: 1 }),
-        });
-
-        if (response.ok) {
-          setProducts((prevProducts) =>
-            prevProducts.map((p) => (p.id === productId ? { ...p, stock: p.stock - 1 } : p))
-          );
-          startReservationTimer(productId); // Startar timer vid varje ökning
-        } else {
-          console.error('Failed to decrement stock');
-        }
-      } catch (error) {
-        console.error('Error decrementing stock:', error);
-      }
-    } else {
-      alert('Inte tillräckligt med lager.');
-    }
-  };
-
-  // handleDecreaseQuantity ökar/minskar och snackar med servern om de
-  const handleDecreaseQuantity = async (productId: number, decrementBy = 1) => {
-    if (cartQuantities[productId] > 0) {
-      setCartQuantities((prev) => {
-        const newQuantities = { ...prev };
-        newQuantities[productId] -= decrementBy;
-        if (newQuantities[productId] <= 0) {
-          delete newQuantities[productId];
-        }
-        return newQuantities;
-      });
-
-      try {
-        // ökar lagret på servern med 1 eftersom vi tar bort en produkt från varukorgen
-        const response = await fetch(`http://localhost:3001/products/${productId}/incrementStock`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ amount: decrementBy }),
-        });
-
-        if (response.ok) {
-          setProducts((prevProducts) =>
-            prevProducts.map((p) => (p.id === productId ? { ...p, stock: p.stock + decrementBy } : p))
-          );
-          clearTimeout(reservationTimers.current[productId]); // Stoppar timern vid minskning
-        } else {
-          console.error('Failed to increment stock');
-        }
-      } catch (error) {
-        console.error('Error incrementing stock:', error);
-      }
-    }
-  };
-
-  // Anropar updateCartTotalCount och updateCartItems varje gång cartQuantities ändras
-  useEffect(() => {
-    updateCartTotalCount();
-    updateCartItems();
-  }, [cartQuantities]);
-
-  //  återställer lagersaldo för varukorgens produkter
-  const resetCartStock = async () => {
-    for (const [productId, quantity] of Object.entries(cartQuantities)) {
-      if (quantity > 0) {
-        try {
-          await fetch(`http://localhost:3001/products/${productId}/incrementStock`, {
-            method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ amount: quantity }),
-          });
-        } catch (error) {
-          console.error('Error resetting stock for product:', productId);
-        }
-      }
-    }
-    setCartQuantities({});
-  };
-
-  // anropar resetCartStock vid utloggning eller när komponenten avmonteras
-  useEffect(() => {
-    return () => {
-      resetCartStock();
-    };
-  }, []);
-
+  // Skapa en ny produkt
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -286,16 +194,16 @@ const Store: React.FC = () => {
     setSelectedProduct(product);
   };
 
-//radera produkt
+  // radera produkt
   const handleDeleteProduct = async (productId: number) => {
     try {
       const response = await fetch(`http://localhost:3001/products/${productId}`, {
         method: 'DELETE',
       });
-  
+
       if (response.ok) {
-        // Uppdatera produktlistan lokalt
-        setProducts((prevProducts) => prevProducts.filter((product) => product.id !== productId));
+        // uppdatera produktlistan lokalt
+        setProducts(prevProducts => prevProducts.filter(product => product.id !== productId));
         setEditModalIsOpen(false);
         setEditProduct(null);
       } else {
@@ -305,8 +213,6 @@ const Store: React.FC = () => {
       console.error('Error deleting product:', error);
     }
   };
-  
-
 
   return (
     <div className="shop">
@@ -317,7 +223,7 @@ const Store: React.FC = () => {
         <button onClick={() => setModalIsOpen(true)}>Lägg till produkt</button>
       )}
 
-      {/* modal för att lägga till produkt (admin) */}
+      {/* Modal för att lägga till produkt (admin) */}
       <Modal isOpen={modalIsOpen} onRequestClose={() => setModalIsOpen(false)} className="admin-add-product-modal">
         <h2>Lägg till produkt</h2>
         <form onSubmit={handleSubmit}>
@@ -335,59 +241,52 @@ const Store: React.FC = () => {
             required
           />
           <input
-  type="number"
-  placeholder="Pris"
-  value={price}
-  onChange={(e) => {
-    const inputValue = e.target.value;
-    setPrice(inputValue === '' ? '' : Math.max(0, Number(inputValue)));
-  }}
-  min="0"
-  required
-/>
-
-
-<input
-  type="number"
-  placeholder="Lagerstatus"
-  value={stock}
-  onChange={(e) => {
-    const inputValue = e.target.value;
-    setStock(inputValue === '' ? '' : Math.max(0, Number(inputValue)));
-  }}
-  min="0"
-  required
-/>
- <button type="submit">Skapa produkt</button>
+            type="number"
+            placeholder="Pris"
+            value={price}
+            onChange={(e) => {
+              const inputValue = e.target.value;
+              setPrice(inputValue === '' ? '' : Math.max(0, Number(inputValue)));
+            }}
+            min="0"
+            required
+          />
+          <input
+            type="number"
+            placeholder="Lagerstatus"
+            value={stock}
+            onChange={(e) => {
+              const inputValue = e.target.value;
+              setStock(inputValue === '' ? '' : Math.max(0, Number(inputValue)));
+            }}
+            min="0"
+            required
+          />
+          <button type="submit">Skapa produkt</button>
         </form>
-  
         <button onClick={() => setModalIsOpen(false)}>Stäng</button>
       </Modal>
 
-      {/* listan med produkter */}
+      {/* Listan med produkter */}
       <ProductList
-           products={products}
-           isAdmin={isAdmin}
-           cartQuantities={cartQuantities}
-           handleProductClick={handleProductClick}
-           handleDecreaseQuantity={handleDecreaseQuantity}
-           handleIncreaseQuantity={handleIncreaseQuantity}
-           handleAddToCart={handleAddToCart}
-           openEditModal={openEditModal}
-         />
+        products={products}
+        isAdmin={isAdmin}
+        cartItems={authContext?.cartItems || []}
+        handleProductClick={handleProductClick}
+        handleRemoveFromCart={handleRemoveFromCart}
+        handleAddToCart={handleAddToCart}
+        openEditModal={openEditModal}
+      />
 
-
-      {/* modal för vald produkt */}
+      {/* Modal för vald produkt */}
       <ProductModal
-           isOpen={!!selectedProduct}
-           onRequestClose={() => setSelectedProduct(null)}
-           product={selectedProduct}
-           cartQuantities={cartQuantities}
-           handleDecreaseQuantity={handleDecreaseQuantity}
-           handleIncreaseQuantity={handleIncreaseQuantity}
-           handleAddToCart={handleAddToCart}
-           />
-
+        isOpen={!!selectedProduct}
+        onRequestClose={() => setSelectedProduct(null)}
+        product={selectedProduct}
+        cartItems={authContext?.cartItems || []}
+        handleRemoveFromCart={handleRemoveFromCart}
+        handleAddToCart={handleAddToCart}
+      />
 
       {/* Redigeringsmodal för admin */}
       <Modal isOpen={editModalIsOpen} onRequestClose={() => setEditModalIsOpen(false)} className="admin-add-product-modal">
@@ -407,38 +306,37 @@ const Store: React.FC = () => {
             required
           />
           <input
-          type="number"
-          placeholder="Pris"
-          value={price}
-          onChange={(e) => {
-       const inputValue = e.target.value;
-       setPrice(inputValue === '' ? '' : Math.max(0, Number(inputValue)));
-     }}
-        min="0"
-        required
-         />
-
-         <input
-         type="number"
-         placeholder="Lagerstatus"
-         value={stock}
-         onChange={(e) => {
-       const inputValue = e.target.value;
-       setStock(inputValue === '' ? '' : Math.max(0, Number(inputValue)));
-     }}
-      min="0"
-      required
-     />
-        <button type="submit">Spara ändringar</button>
+            type="number"
+            placeholder="Pris"
+            value={price}
+            onChange={(e) => {
+              const inputValue = e.target.value;
+              setPrice(inputValue === '' ? '' : Math.max(0, Number(inputValue)));
+            }}
+            min="0"
+            required
+          />
+          <input
+            type="number"
+            placeholder="Lagerstatus"
+            value={stock}
+            onChange={(e) => {
+              const inputValue = e.target.value;
+              setStock(inputValue === '' ? '' : Math.max(0, Number(inputValue)));
+            }}
+            min="0"
+            required
+          />
+          <button type="submit">Spara ändringar</button>
         </form>
 
-        {/* ta bort produkt */}
+        {/* Ta bort produkt */}
         <button 
-    onClick={() => handleDeleteProduct(editProduct.id)} 
-    style={{ color: 'red', marginTop: '10px' }}
-  >
-    Ta bort produkt
-  </button>
+          onClick={() => handleDeleteProduct(editProduct.id)} 
+          style={{ color: 'red', marginTop: '10px' }}
+        >
+          Ta bort produkt
+        </button>
         <button onClick={() => setEditModalIsOpen(false)}>Stäng</button>
       </Modal>
     </div>

@@ -187,21 +187,48 @@ app.patch('/products/:id/decrementStock', (req, res) => {
 
 
 // öka lagerstatus
+// öka lagerstatus
 app.patch('/products/:id/incrementStock', (req, res) => {
   const { id } = req.params;
-  const incrementAmount = req.body.amount || 1; // ökar med en 
+  const incrementAmount = parseInt(req.body.amount, 10) || 1; // säkerställer att det är ett heltal
+
+  const productId = parseInt(id, 10);
+  if (isNaN(productId)) {
+    console.log(`Invalid product ID received: ${id}`);
+    return res.status(400).json({ error: 'Invalid product ID' });
+  }
 
   connection.query(
     'UPDATE products SET stock = stock + ? WHERE id = ?',
-    [incrementAmount, id],
+    [incrementAmount, productId],
     (err, result) => {
       if (err) {
+        console.error(`Error updating stock for product ID ${productId}:`, err);
         return res.status(500).json({ error: 'Error updating stock' });
       }
-      res.json({ message: 'Stock restored successfully' });
+      if (result.affectedRows === 0) {
+        console.log(`Product ID ${productId} not found for stock increment`);
+        return res.status(404).json({ error: 'Product not found' });
+      }
+
+      // hämtar det uppdaterade lagersaldot
+      connection.query(
+        'SELECT stock FROM products WHERE id = ?',
+        [productId],
+        (err, results) => {
+          if (err) {
+            console.error(`Error fetching updated stock for product ID ${productId}:`, err);
+            return res.status(500).json({ error: 'Error fetching updated stock' });
+          }
+          const updatedStock = results[0].stock;
+          console.log(`Stock for product ID ${productId} updated to ${updatedStock}`);
+          res.json({ message: 'Stock restored successfully', stock: updatedStock });
+        }
+      );
     }
   );
 });
+
 
 // admin kan uppdatera produkter
 app.patch('/products/:id', (req, res) => {
@@ -237,6 +264,53 @@ app.delete('/products/:id', (req, res) => {
     }
     res.status(200).json({ message: 'Produkten har tagits bort!' });
   });
+});
+
+// hämtar reservationer för en specifik användare
+app.get('/reservations', async (req, res) => {
+  const userId = req.query.userId;
+  
+  if (!userId) {
+    return res.status(400).json({ error: 'User ID saknas i förfrågan.' });
+  }
+
+  try {
+    const [reservations] = await connection.promise().query(
+      'SELECT * FROM reservations WHERE userId = ?',
+      [userId]
+    );
+
+    res.status(200).json(reservations);
+  } catch (error) {
+    console.error('Error fetching reservations:', error);
+    res.status(500).json({ error: 'Kunde inte hämta reservationer.' });
+  }
+});
+
+
+
+// Rensa utgångna reservationer
+app.delete('/reservations/expired', async (req, res) => {
+  try {
+    const now = new Date().toISOString();
+    const [expiredReservations] = await connection.promise().query(
+      'SELECT * FROM reservations WHERE expiresAt < ?',
+      [now]
+    );
+
+    for (const reservation of expiredReservations) {
+      await connection.promise().query(
+        'UPDATE products SET stock = stock + ? WHERE id = ?',
+        [reservation.quantity, reservation.productId]
+      );
+    }
+
+    await connection.promise().query('DELETE FROM reservations WHERE expiresAt < ?', [now]);
+    res.status(200).json({ message: 'Expired reservations cleared' });
+  } catch (error) {
+    console.error('Error clearing expired reservations:', error);
+    res.status(500).json({ error: 'Failed to clear expired reservations' });
+  }
 });
 
 

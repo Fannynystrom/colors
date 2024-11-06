@@ -4,24 +4,35 @@ import { FaEdit } from 'react-icons/fa';
 interface ProductListProps {
   products: any[];
   isAdmin: boolean;
-  cartQuantities: { [productId: number]: number };
+  cartItems: CartItem[];
   handleProductClick: (product: any) => void;
-  handleDecreaseQuantity: (productId: number) => void;
-  handleIncreaseQuantity: (productId: number) => void;
+  handleRemoveFromCart: (productId: number, quantity?: number) => void;
   handleAddToCart: (product: any) => void;
   openEditModal: (product: any) => void;
+}
+
+interface CartItem {
+  id: number;
+  name: string;
+  price: number;
+  quantity: number;
 }
 
 const ProductList: React.FC<ProductListProps> = ({
   products,
   isAdmin,
-  cartQuantities,
+  cartItems,
   handleProductClick,
-  handleDecreaseQuantity,
-  handleIncreaseQuantity,
+  handleRemoveFromCart,
   handleAddToCart,
   openEditModal,
 }) => {
+  // skapa ett objekt för snabb åtkomst till varukorgens kvantiteter
+  const cartQuantities: { [productId: number]: number } = {};
+  cartItems.forEach(item => {
+    cartQuantities[item.id] = item.quantity;
+  });
+
   return (
     <div>
       <h2>Produkter</h2>
@@ -37,9 +48,9 @@ const ProductList: React.FC<ProductListProps> = ({
             <p>Lagerstatus: {product.stock} st</p>
             {cartQuantities[product.id] ? (
               <div className="quantity-control">
-                <button onClick={(e) => { e.stopPropagation(); handleDecreaseQuantity(product.id); }}>-</button>
+                <button onClick={(e) => { e.stopPropagation(); handleRemoveFromCart(product.id, 1); }}>-</button>
                 <span>{cartQuantities[product.id]}</span>
-                <button onClick={(e) => { e.stopPropagation(); handleIncreaseQuantity(product.id); }}>+</button>
+                <button onClick={(e) => { e.stopPropagation(); handleAddToCart(product); }}>+</button>
               </div>
             ) : (
               <button onClick={(e) => { e.stopPropagation(); handleAddToCart(product); }}>Lägg till i varukorg</button>

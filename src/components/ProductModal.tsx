@@ -1,55 +1,80 @@
+// src/components/ProductModal.tsx
+
 import React from 'react';
 import Modal from 'react-modal';
+import { CartItem } from '../context/AuthContext'; 
+import { Product } from '../types/product'; 
 import CommentsSection from './CommentSection'; 
 
 interface ProductModalProps {
   isOpen: boolean;
   onRequestClose: () => void;
-  product: any; 
-  cartQuantities: { [productId: number]: number };
-  handleDecreaseQuantity: (productId: number) => void;
-  handleIncreaseQuantity: (productId: number) => void;
-  handleAddToCart: (product: any) => void;
+  product: Product | null;
+  cartItems: CartItem[];
+  handleRemoveFromCart: (productId: number, quantity?: number) => Promise<void>;
+  handleAddToCart: (product: Product) => Promise<void>;
 }
 
 const ProductModal: React.FC<ProductModalProps> = ({
   isOpen,
   onRequestClose,
   product,
-  cartQuantities,
-  handleDecreaseQuantity,
-  handleIncreaseQuantity,
+  cartItems,
+  handleRemoveFromCart,
   handleAddToCart,
 }) => {
+  if (!product) return null;
+
+  // Hitta produktens kvantitet i varukorgen
+  const cartItem = cartItems.find(item => item.id === product.id);
+  const quantity = cartItem ? cartItem.quantity : 0;
+
   return (
-    <Modal isOpen={isOpen} onRequestClose={onRequestClose} className="product-details-modal">
+    <Modal
+      isOpen={isOpen}
+      onRequestClose={onRequestClose}
+      className="product-details-modal" 
+    >
       {product && (
-        <div className="ViewModal">
+        <div className="ViewModal"> 
           <h2>{product.name}</h2>
           <p>{product.description}</p>
           <p>Pris: {product.price} kr</p>
           <p>Lagerstatus: {product.stock} st</p>
-          {cartQuantities[product.id] ? (
+          
+          {quantity > 0 ? (
             <div className="quantity-control">
-              <button className="decrease-btn" onClick={() => handleDecreaseQuantity(product.id)}>
+              <button
+                className="decrease-btn" 
+                onClick={() => handleRemoveFromCart(product.id, 1)}
+              >
                 -
               </button>
-              <span>{cartQuantities[product.id]}</span>
-              <button className="increase-btn" onClick={() => handleIncreaseQuantity(product.id)}>
+              <span>{quantity}</span>
+              <button
+                className="increase-btn" 
+                onClick={() => handleAddToCart(product)}
+              >
                 +
               </button>
             </div>
           ) : (
-            <div className="button-container">
-              <button className="add-to-cart-btn" onClick={() => handleAddToCart(product)}>
+            <div className="button-container"> 
+              <button
+                className="add-to-cart-btn" 
+                onClick={() => handleAddToCart(product)}
+              >
                 Lägg till i varukorg
               </button>
             </div>
           )}
-          {/* Kommentar-sektion eller övrig kod */}
+
           <CommentsSection productId={product.id} />
 
-          <button className="close-modal-btn" onClick={onRequestClose}>
+          <button
+            className="close-modal-btn" 
+            onClick={onRequestClose}
+          >
             Stäng
           </button>
         </div>
