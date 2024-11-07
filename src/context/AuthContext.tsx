@@ -34,13 +34,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [role, setRole] = useState<string>('');
   const [cartTotalCount, setCartTotalCount] = useState<number>(0);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [products, setProducts] = useState<Product[]>([]); 
 
   const cartTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const resetCartStock = async (items: CartItem[]) => {
     for (const item of items) {
       try {
-        await fetch(`http://localhost:3001/products/${item.id}/incrementStock`, {
+        await fetch(`http://localhost:3001/products/${item.id}/release`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
@@ -52,7 +53,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }
   };
-
+  
   const clearCart = async () => {
     await resetCartStock(cartItems);
     setCartItems([]);
@@ -152,6 +153,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [cartItems, cartTotalCount]);
 
+  const fetchUpdatedProducts = async () => {
+    try {
+      const response = await fetch('http://localhost:3001/products');
+      const updatedData = await response.json();
+      setProducts(updatedData);
+    } catch (error) {
+      console.error('Error fetching updated products:', error);
+    }
+  };
+
   const login = (userId: number, userRole: string) => {
     setIsAuthenticated(true);
     setRole(userRole);
@@ -182,6 +193,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setCartItems(updatedCartItems);
     setCartTotalCount(prev => prev + 1);
     console.log(`Lade till ${product.name} i varukorgen`);
+
+    // Reservera produkten i backend och uppdatera produkter
+    try {
+      await fetch(`http://localhost:3001/products/${product.id}/reserve`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: 1 }),
+      });
+      await fetchUpdatedProducts(); // Uppdatera produktlistan efter reservation
+    } catch (error) {
+      console.error('Error reserving product:', error);
+    }
   };
 
   const removeFromCart = async (productId: number, quantity: number = 1) => {
@@ -200,6 +223,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setCartItems(updatedCartItems);
     setCartTotalCount(prev => prev - quantity);
     console.log(`Tog bort ${quantity} av produkt ID ${productId} från varukorgen`);
+
+    // släpp produkten i backend och uppdatera produkter
+    try {
+      await fetch(`http://localhost:3001/products/${productId}/release`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: quantity }),
+      });
+      await fetchUpdatedProducts(); // uppdatera produktlistan efter släpp
+    } catch (error) {
+      console.error('Error releasing product:', error);
+    }
   };
 
   return (

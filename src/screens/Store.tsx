@@ -44,37 +44,39 @@ const Store: React.FC = () => {
   // lägg till en produkt i varukorgen och minska lagersaldot
   const handleAddToCart = async (product: any) => {
     if (!authContext) return;
-
-    if (product.stock <= 0) {
+  
+    // Kontrollera att det finns tillräckligt med lager innan reservation
+    const availableStock = product.stock - product.reserved_stock;
+    if (availableStock <= 0) {
       alert('Inte tillräckligt med lager.');
       return;
     }
-
-    // lägg till i varukorgen via AuthContext
+  
+    // Lägg till i varukorgen via AuthContext
     authContext.addToCart(product);
-
-    // minskar lagersaldot på servern
+  
     try {
-      const response = await fetch(`http://localhost:3001/products/${product.id}/decrementStock`, {
+      const response = await fetch(`http://localhost:3001/products/${product.id}/reserve`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ amount: 1 }),
       });
-
+  
       if (response.ok) {
-        setProducts(prevProducts =>
-          prevProducts.map(p => (p.id === product.id ? { ...p, stock: p.stock - 1 } : p))
-        );
-        startReservationTimer(product.id);
+        const updatedResponse = await fetch('http://localhost:3001/products');
+        const updatedData = await updatedResponse.json();
+        setProducts(updatedData); // Uppdatera produkterna i frontend
+        console.log(`Product ID ${product.id} has been reserved`);
       } else {
-        console.error('Failed to decrement stock');
+        console.error('Failed to reserve stock');
       }
     } catch (error) {
-      console.error('Error decrementing stock:', error);
+      console.error('Error reserving stock:', error);
     }
   };
+  
 
   // tar bort en produkt från varukorgen och ökar lagersaldot
   const handleRemoveFromCart = async (productId: number, quantity: number = 1) => {
