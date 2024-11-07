@@ -1,6 +1,5 @@
 import React, { createContext, useState, useEffect, useRef } from 'react';
 
-// exporterar CartItem
 export interface CartItem {
   id: number;
   name: string;
@@ -23,6 +22,7 @@ interface AuthContextType {
   logout: () => void;
   cartTotalCount: number;
   cartItems: CartItem[];
+  products: Product[];
   addToCart: (product: Product) => Promise<void>;
   removeFromCart: (productId: number, quantity?: number) => Promise<void>;
 }
@@ -34,7 +34,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [role, setRole] = useState<string>('');
   const [cartTotalCount, setCartTotalCount] = useState<number>(0);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [products, setProducts] = useState<Product[]>([]); 
+  const [products, setProducts] = useState<Product[]>([]);
 
   const cartTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -53,7 +53,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }
   };
-  
+
   const clearCart = async () => {
     await resetCartStock(cartItems);
     setCartItems([]);
@@ -182,6 +182,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const addToCart = async (product: Product) => {
     const existingItem = cartItems.find(item => item.id === product.id);
     let updatedCartItems: CartItem[];
+    
     if (existingItem) {
       updatedCartItems = cartItems.map(item =>
         item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
@@ -189,28 +190,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } else {
       updatedCartItems = [...cartItems, { id: product.id, name: product.name, price: product.price, quantity: 1 }];
     }
-
+  
     setCartItems(updatedCartItems);
     setCartTotalCount(prev => prev + 1);
-    console.log(`Lade till ${product.name} i varukorgen`);
-
-    // Reservera produkten i backend och uppdatera produkter
+    
+    // reservera produkten i backend och uppdatera produkter
     try {
-      await fetch(`http://localhost:3001/products/${product.id}/reserve`, {
+      const response = await fetch(`http://localhost:3001/products/${product.id}/reserve`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount: 1 }),
       });
-      await fetchUpdatedProducts(); // Uppdatera produktlistan efter reservation
+      if (response.ok) {
+        await fetchUpdatedProducts();
+      }
     } catch (error) {
       console.error('Error reserving product:', error);
     }
   };
+  
+  
 
   const removeFromCart = async (productId: number, quantity: number = 1) => {
     const existingItem = cartItems.find(item => item.id === productId);
     if (!existingItem) return;
-
+  
     let updatedCartItems: CartItem[];
     if (existingItem.quantity <= quantity) {
       updatedCartItems = cartItems.filter(item => item.id !== productId);
@@ -219,26 +223,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         item.id === productId ? { ...item, quantity: item.quantity - quantity } : item
       );
     }
-
+  
     setCartItems(updatedCartItems);
     setCartTotalCount(prev => prev - quantity);
     console.log(`Tog bort ${quantity} av produkt ID ${productId} från varukorgen`);
-
+  
     // släpp produkten i backend och uppdatera produkter
     try {
-      await fetch(`http://localhost:3001/products/${productId}/release`, {
+      const response = await fetch(`http://localhost:3001/products/${productId}/release`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount: quantity }),
       });
-      await fetchUpdatedProducts(); // uppdatera produktlistan efter släpp
+      if (response.ok) {
+        await fetchUpdatedProducts();
+      }
     } catch (error) {
       console.error('Error releasing product:', error);
     }
   };
+  
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, role, login, logout, cartTotalCount, cartItems, addToCart, removeFromCart }}>
+    <AuthContext.Provider
+      value={{
+        isAuthenticated,
+        role,
+        login,
+        logout,
+        cartTotalCount,
+        cartItems,
+        products,
+        addToCart,
+        removeFromCart,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

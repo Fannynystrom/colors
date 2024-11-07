@@ -27,7 +27,6 @@ const ProductList: React.FC<ProductListProps> = ({
   handleAddToCart,
   openEditModal,
 }) => {
-  // skapa ett objekt för snabb åtkomst till varukorgens kvantiteter
   const cartQuantities: { [productId: number]: number } = {};
   cartItems.forEach(item => {
     cartQuantities[item.id] = item.quantity;

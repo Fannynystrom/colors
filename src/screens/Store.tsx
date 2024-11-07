@@ -41,89 +41,27 @@ const Store: React.FC = () => {
     fetchProducts();
   }, []);
 
-  // lägg till en produkt i varukorgen och minska lagersaldot
+  //  handleAddToCart asynkron
   const handleAddToCart = async (product: any) => {
-    if (!authContext) return;
-  
-    // Kontrollera att det finns tillräckligt med lager innan reservation
-    const availableStock = product.stock - product.reserved_stock;
-    if (availableStock <= 0) {
-      alert('Inte tillräckligt med lager.');
-      return;
-    }
-  
-    // Lägg till i varukorgen via AuthContext
-    authContext.addToCart(product);
-  
-    try {
-      const response = await fetch(`http://localhost:3001/products/${product.id}/reserve`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ amount: 1 }),
-      });
-  
-      if (response.ok) {
-        const updatedResponse = await fetch('http://localhost:3001/products');
-        const updatedData = await updatedResponse.json();
-        setProducts(updatedData); // Uppdatera produkterna i frontend
-        console.log(`Product ID ${product.id} has been reserved`);
-      } else {
-        console.error('Failed to reserve stock');
-      }
-    } catch (error) {
-      console.error('Error reserving stock:', error);
+    if (authContext) {
+      await authContext.addToCart(product);
     }
   };
-  
 
-  // tar bort en produkt från varukorgen och ökar lagersaldot
+  // handleRemoveFromCart asynkron
   const handleRemoveFromCart = async (productId: number, quantity: number = 1) => {
-    if (!authContext) return;
-  
-    // ta bort från varukorgen via AuthContext
-    await authContext.removeFromCart(productId, quantity);
-  
-    // öka lagersaldot på servern
-    try {
-      const response = await fetch(`http://localhost:3001/products/${productId}/incrementStock`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ amount: quantity }),
-      });
-  
-      if (response.ok) {
-        const data = await response.json();
-        setProducts(prevProducts =>
-          prevProducts.map(p => (p.id === productId ? { ...p, stock: data.stock } : p))
-        );
-        clearTimeout(reservationTimers.current[productId]);
-        console.log(`Ökat lagersaldo för produkt ID ${productId} med ${quantity}`);
-      } else {
-        const errorData = await response.json();
-        console.error('Misslyckades med att öka lagersaldo:', errorData.error);
-      }
-    } catch (error) {
-      console.error('Fel vid ökning av lagersaldo:', error);
+    if (authContext) {
+      await authContext.removeFromCart(productId, quantity);
     }
   };
-  
-  
 
-  // timer för att automatiskt ta bort reserverade produkter
   const startReservationTimer = (productId: number) => {
     clearTimeout(reservationTimers.current[productId]);
-  
-    reservationTimers.current[productId] = setTimeout(async () => {
-      await handleRemoveFromCart(productId);
+    reservationTimers.current[productId] = setTimeout(() => {
+      handleRemoveFromCart(productId);
     }, 60000); // 1 minut
   };
-  
 
-  // redigeringsmodalen
   const openEditModal = (product: any) => {
     setEditProduct(product);
     setName(product.name);
@@ -133,7 +71,6 @@ const Store: React.FC = () => {
     setEditModalIsOpen(true);
   };
 
-  // produktuppdatering vid redigering
   const handleUpdateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editProduct) return;
@@ -147,9 +84,9 @@ const Store: React.FC = () => {
       });
 
       if (response.ok) {
-        setProducts(prevProducts =>
-          prevProducts.map(p => (p.id === editProduct.id ? { ...p, ...updatedProduct } : p))
-        );
+        const updatedResponse = await fetch('http://localhost:3001/products');
+        const updatedData = await updatedResponse.json();
+        setProducts(updatedData);
         setEditModalIsOpen(false);
         setEditProduct(null);
       } else {
@@ -160,10 +97,8 @@ const Store: React.FC = () => {
     }
   };
 
-  // Skapa en ny produkt
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
     const productData = { name, description, price, stock };
 
     try {
@@ -196,7 +131,6 @@ const Store: React.FC = () => {
     setSelectedProduct(product);
   };
 
-  // radera produkt
   const handleDeleteProduct = async (productId: number) => {
     try {
       const response = await fetch(`http://localhost:3001/products/${productId}`, {
@@ -204,7 +138,6 @@ const Store: React.FC = () => {
       });
 
       if (response.ok) {
-        // uppdatera produktlistan lokalt
         setProducts(prevProducts => prevProducts.filter(product => product.id !== productId));
         setEditModalIsOpen(false);
         setEditProduct(null);
@@ -225,7 +158,7 @@ const Store: React.FC = () => {
         <button onClick={() => setModalIsOpen(true)}>Lägg till produkt</button>
       )}
 
-      {/* Modal för att lägga till produkt (admin) */}
+      {/* modal för att lägga till produkt */}
       <Modal isOpen={modalIsOpen} onRequestClose={() => setModalIsOpen(false)} className="admin-add-product-modal">
         <h2>Lägg till produkt</h2>
         <form onSubmit={handleSubmit}>
@@ -269,7 +202,6 @@ const Store: React.FC = () => {
         <button onClick={() => setModalIsOpen(false)}>Stäng</button>
       </Modal>
 
-      {/* Listan med produkter */}
       <ProductList
         products={products}
         isAdmin={isAdmin}
@@ -280,7 +212,6 @@ const Store: React.FC = () => {
         openEditModal={openEditModal}
       />
 
-      {/* Modal för vald produkt */}
       <ProductModal
         isOpen={!!selectedProduct}
         onRequestClose={() => setSelectedProduct(null)}
@@ -290,7 +221,8 @@ const Store: React.FC = () => {
         handleAddToCart={handleAddToCart}
       />
 
-      {/* Redigeringsmodal för admin */}
+
+      {/* redigeringsmodal admin */}
       <Modal isOpen={editModalIsOpen} onRequestClose={() => setEditModalIsOpen(false)} className="admin-add-product-modal">
         <h2>Redigera produkt</h2>
         <form onSubmit={handleUpdateProduct}>
@@ -331,12 +263,7 @@ const Store: React.FC = () => {
           />
           <button type="submit">Spara ändringar</button>
         </form>
-
-        {/* Ta bort produkt */}
-        <button 
-          onClick={() => handleDeleteProduct(editProduct.id)} 
-          style={{ color: 'red', marginTop: '10px' }}
-        >
+        <button onClick={() => handleDeleteProduct(editProduct.id)} style={{ color: 'red', marginTop: '10px' }}>
           Ta bort produkt
         </button>
         <button onClick={() => setEditModalIsOpen(false)}>Stäng</button>

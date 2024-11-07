@@ -68,63 +68,44 @@ router.delete('/:id', (req, res) => {
 
 // reservera en produkt
 router.patch('/:id/reserve', (req, res) => {
-  const { id } = req.params;
-  const reserveAmount = req.body.amount || 1;
-
-  connection.beginTransaction((err) => {
-    if (err) return res.status(500).json({ error: 'Fel vid start av transaktion' });
-
+    const { id } = req.params;
+    const reserveAmount = req.body.amount || 1;
+  
     connection.query(
       'UPDATE products SET stock = stock - ?, reserved_stock = reserved_stock + ? WHERE id = ? AND stock >= ?',
       [reserveAmount, reserveAmount, id, reserveAmount],
-      (updateErr, result) => {
-        if (updateErr) {
-          return connection.rollback(() => {
-            res.status(500).json({ error: 'Fel vid reservation av lagersaldo' });
-          });
+      (err, result) => {
+        if (err) {
+          return res.status(500).json({ error: 'Error reserving stock' });
         }
-
         if (result.affectedRows === 0) {
-          return connection.rollback(() => {
-            res.status(400).json({ error: 'Otillräckligt lagersaldo eller ogiltigt produkt-ID' });
-          });
+          return res.status(400).json({ error: 'Not enough stock or invalid product ID' });
         }
-
-        connection.commit((commitErr) => {
-          if (commitErr) {
-            return connection.rollback(() => {
-              res.status(500).json({ error: 'Fel vid commit av transaktion' });
-            });
-          }
-          console.log(`Product ID ${id} stock decreased by ${reserveAmount} and reserved_stock increased by ${reserveAmount}`);
-          res.json({ message: 'Produkten har reserverats' });
-        });
+        res.json({ message: 'Product reserved successfully' });
       }
     );
   });
-});
 
-// släpp en reserverad produkt
-router.patch('/:id/release', (req, res) => {
-  const { id } = req.params;
-  const releaseAmount = req.body.amount || 1;
-
-  connection.query(
-    'UPDATE products SET stock = stock + ?, reserved_stock = reserved_stock - ? WHERE id = ? AND reserved_stock >= ?',
-    [releaseAmount, releaseAmount, id, releaseAmount],
-    (err, result) => {
-      if (err) {
-        console.error('Fel vid återställning av lagersaldo:', err);
-        return res.status(500).json({ error: 'Fel vid återställning av lagersaldo' });
+  //återgå till stock asså lagerstatus
+  router.patch('/:id/release', (req, res) => {
+    const { id } = req.params;
+    const releaseAmount = req.body.amount || 1;
+  
+    connection.query(
+      'UPDATE products SET stock = stock + ?, reserved_stock = reserved_stock - ? WHERE id = ? AND reserved_stock >= ?',
+      [releaseAmount, releaseAmount, id, releaseAmount],
+      (err, result) => {
+        if (err) {
+          return res.status(500).json({ error: 'Error releasing stock' });
+        }
+        if (result.affectedRows === 0) {
+          return res.status(400).json({ error: 'No reserved stock or invalid product ID' });
+        }
+        res.json({ message: 'Product released successfully' });
       }
-      if (result.affectedRows === 0) {
-        return res.status(400).json({ error: 'Inget reserverat lager eller ogiltigt produkt-ID' });
-      }
-
-      console.log(`Product ID ${id} stock increased by ${releaseAmount} and reserved_stock decreased by ${releaseAmount}`);
-      res.json({ message: 'Produkten har återställts till lager' });
-    }
-  );
-});
-
-export default router;
+    );
+  });
+  
+  
+  
+  export default router;
