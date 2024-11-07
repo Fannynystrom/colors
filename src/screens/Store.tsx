@@ -161,8 +161,15 @@ const Store: React.FC = () => {
 
   return (
     <div className="shop">
-      <img src={`${process.env.PUBLIC_URL}/målarrubrik.png`} alt="Butik Rubrik" style={{ width: '90%', height: 'auto' }} />
-
+    {/* video-element för rubriken */}
+    <video
+      className="header-video" 
+      src={`${process.env.PUBLIC_URL}/storeheader.mp4`}  
+      autoPlay
+      loop
+      muted
+      style={{ width: '100%', height: 'auto' }}
+    />
       <h1>Butik</h1>
       {isAdmin && (
         <button onClick={() => setModalIsOpen(true)}>Lägg till produkt</button>

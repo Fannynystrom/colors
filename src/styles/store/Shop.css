@@ -1,3 +1,14 @@
+
+.header-video {
+  width: 100%;                
+  max-width: 1100px;         
+  height: auto;             
+  display: block;            
+  margin: 20px auto;         
+  border-radius: 4px;       
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2); 
+}
+
 /*ul för listan med produkter */
 .shop ul {
   display: grid;
