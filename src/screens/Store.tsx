@@ -43,10 +43,20 @@ const Store: React.FC = () => {
 
   //  handleAddToCart asynkron
   const handleAddToCart = async (product: any) => {
-    if (authContext) {
-      await authContext.addToCart(product);
+    if (!authContext) return;
+  
+    // beräkna den totala mängden i varukorgen
+    const totalCartQuantity = authContext.cartItems.reduce((total, item) => total + item.quantity, 0);
+  
+    // om vi redan har fem eller fler produkter, visa en varning
+    if (totalCartQuantity >= 5) {
+      alert("Tyvärr kan du endast välja 5 produkter totalt åt gången.");
+      return;
     }
+  
+    await authContext.addToCart(product);
   };
+  
 
   // handleRemoveFromCart asynkron
   const handleRemoveFromCart = async (productId: number, quantity: number = 1) => {

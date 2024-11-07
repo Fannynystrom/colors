@@ -180,9 +180,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const addToCart = async (product: Product) => {
+    // beräkna den totala mängden i varukorgen
+    const totalCartQuantity = cartItems.reduce((total, item) => total + item.quantity, 0);
+  
+    // om användaren valt fler än fem, visas en varning
+    if (totalCartQuantity >= 5) {
+      alert("Tyvärr kan du endast välja 5 produkter totalt åt gången.");
+      return;
+    }
+  
     const existingItem = cartItems.find(item => item.id === product.id);
     let updatedCartItems: CartItem[];
-    
+  
     if (existingItem) {
       updatedCartItems = cartItems.map(item =>
         item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
@@ -193,7 +202,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
     setCartItems(updatedCartItems);
     setCartTotalCount(prev => prev + 1);
-    
+  
     // reservera produkten i backend och uppdatera produkter
     try {
       const response = await fetch(`http://localhost:3001/products/${product.id}/reserve`, {
@@ -208,6 +217,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Error reserving product:', error);
     }
   };
+  
   
   
 
