@@ -45,7 +45,6 @@ const ProductList: React.FC<ProductListProps> = ({
             <h3>{product.name}</h3>
             <p>{product.description}</p>
             <p>Pris: {product.price} kr</p>
-            <p>Lagerstatus: {product.stock} st</p>
             {cartQuantities[product.id] ? (
               <div className="quantity-control">
                 <button onClick={(e) => { e.stopPropagation(); handleRemoveFromCart(product.id, 1); }}>-</button>

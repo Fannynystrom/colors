@@ -40,7 +40,6 @@ const ProductModal: React.FC<ProductModalProps> = ({
           <h2>{product.name}</h2>
           <p>{product.description}</p>
           <p>Pris: {product.price} kr</p>
-          <p>Lagerstatus: {product.stock} st</p>
           
           {quantity > 0 ? (
             <div className="quantity-control">
