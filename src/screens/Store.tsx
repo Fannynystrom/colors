@@ -92,7 +92,7 @@ const Store: React.FC = () => {
     formData.append('price', price.toString());
     formData.append('stock', stock.toString());
     if (image) {
-      formData.append('image', image); // Lägg till bild om användaren valt en ny bild
+      formData.append('image', image); // Bifoga ny bild om den finns
     }
   
     try {
@@ -107,7 +107,7 @@ const Store: React.FC = () => {
         setProducts(updatedData);
         setEditModalIsOpen(false);
         setEditProduct(null);
-        setImage(null); // Rensa bilden efter uppladdning
+        setImage(null); // Rensa bilden
       } else {
         console.error('Failed to update product');
       }
@@ -116,44 +116,29 @@ const Store: React.FC = () => {
     }
   };
   
+  
+  
+  
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
   
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('description', description);
+    formData.append('price', price.toString());
+    formData.append('stock', stock.toString());
+    if (image) {
+      formData.append('image', image); 
+    }
+  
     try {
-      // Skapa produkten först
-      const productResponse = await fetch('http://localhost:3001/products', {
+      const response = await fetch('http://localhost:3001/products', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name, description, price, stock }),
+        body: formData, 
       });
   
-      if (productResponse.ok) {
-        const productData = await productResponse.json();
-  
-        // Kontrollera att produktData innehåller ett giltigt productId
-        if (!productData.productId) {
-          console.error("Produkt-ID saknas efter skapandet.");
-          return;
-        }
-  
-        // Ladda upp bilden om den finns
-        if (image) {
-          const formData = new FormData();
-          formData.append('image', image);
-  
-          const imageResponse = await fetch(`http://localhost:3001/products/image/${productData.productId}`, {
-            method: 'POST',
-            body: formData,
-          });
-  
-          if (!imageResponse.ok) {
-            console.error('Failed to upload image');
-          }
-        }
-  
-        // Uppdatera produktlistan och stäng modalen
+      if (response.ok) {
+        //rensar alla fält när de skickats och stänger modalen vid skickande
         const updatedResponse = await fetch('http://localhost:3001/products');
         const updatedData = await updatedResponse.json();
         setProducts(updatedData);
@@ -162,14 +147,15 @@ const Store: React.FC = () => {
         setDescription('');
         setPrice('');
         setStock('');
-        setImage(null); // Rensa bilden
+        setImage(null); 
       } else {
-        console.error('Failed to create product:', productResponse.statusText);
+        console.error('Failed to create product');
       }
     } catch (error) {
       console.error('Error:', error);
     }
   };
+  
   
   
 
@@ -349,8 +335,9 @@ const Store: React.FC = () => {
             min="0"
             required
           />
+                    <input type="file" onChange={handleImageChange} />
+
           <button type="submit">Spara ändringar</button>
-          <input type="file" onChange={handleImageChange} />
         </form>
         <button
           onClick={() => handleDeleteProduct(editProduct.id)}

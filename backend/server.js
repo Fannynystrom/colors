@@ -5,7 +5,6 @@ import cors from 'cors';
 import connection from './db.js';
 import { logLoginAttempt } from './log.js';
 import productRoutes from './routes/productRoutes.js';
-import imageRoutes from './routes/ImageRoutes.js'; 
 
 dotenv.config();
 
@@ -20,7 +19,6 @@ app.use('/uploads', express.static('uploads'));
 
 // användning av produkt och bildrutter
 app.use('/products', productRoutes);
-app.use('/products/image', imageRoutes);
 
 // loginAttempts lagrar antalet misslyckade försök
 const loginAttempts = {};
