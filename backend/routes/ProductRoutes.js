@@ -5,30 +5,34 @@ const router = express.Router();
 
 // hämtar alla produkter
 router.get('/', (req, res) => {
-  connection.query('SELECT id, name, description, price FROM products', (err, results) => {
-    if (err) {
-      console.error('Error fetching products:', err);
-      return res.status(500).json({ error: 'Failed to fetch products' });
-    }
-    res.json(results);
+    connection.query('SELECT id, name, description, price, stock, image_url FROM products', (err, results) => {
+      if (err) {
+        console.error('Error fetching products:', err);
+        return res.status(500).json({ error: 'Failed to fetch products' });
+      }
+      res.json(results);
+    });
   });
-});
+  
 
 // skapar en ny produkt
 router.post('/', async (req, res) => {
-  const { name, description, price, stock } = req.body;
-
-  try {
-    await connection.promise().query(
-      'INSERT INTO products (name, description, price, stock) VALUES (?, ?, ?, ?)',
-      [name, description, price, stock]
-    );
-    res.status(201).json({ message: 'Produkt skapad!' });
-  } catch (err) {
-    console.error('Error creating product:', err);
-    res.status(500).json({ error: 'Fel vid skapande av produkt.' });
-  }
-});
+    const { name, description, price, stock } = req.body;
+  
+    try {
+      const [result] = await connection.promise().query(
+        'INSERT INTO products (name, description, price, stock) VALUES (?, ?, ?, ?)',
+        [name, description, price, stock]
+      );
+  
+      // skickar tillbaka productId till frontend
+      res.status(201).json({ message: 'Produkt skapad!', productId: result.insertId });
+    } catch (err) {
+      console.error('Error creating product:', err);
+      res.status(500).json({ error: 'Fel vid skapande av produkt.' });
+    }
+  });
+  
 
 // uppdatera en produkt
 router.patch('/:id', (req, res) => {

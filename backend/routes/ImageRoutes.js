@@ -5,22 +5,22 @@ import connection from '../db.js';
 
 const router = express.Router();
 
-// multer för att spara bilder
+//  multer för att spara bilder
 const storage = multer.diskStorage({
-  destination: './uploads/', // här hamnar bilden
+  destination: './uploads/',
   filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname)); 
+    cb(null, Date.now() + path.extname(file.originalname));
   },
 });
 
 const upload = multer({ storage });
 
-//  ladda upp en bild och koppla till produkten
+//  bild för en specifik produkt
 router.post('/:productId', upload.single('image'), (req, res) => {
   const { productId } = req.params;
-  const image_url = `/uploads/${req.file.filename}`; // URL till bilden
+  const image_url = `/uploads/${req.file.filename}`;
 
-  // uppdatera produktens image_url i databasen
+  // uppdatera produktens bild-URL i databasen
   connection.query(
     'UPDATE products SET image_url = ? WHERE id = ?',
     [image_url, productId],

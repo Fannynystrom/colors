@@ -24,6 +24,7 @@ const Store: React.FC = () => {
   const [stock, setStock] = useState<number | ''>('');
   const [editModalIsOpen, setEditModalIsOpen] = useState<boolean>(false);
   const [editProduct, setEditProduct] = useState<any>(null);
+  const [image, setImage] = useState<File | null>(null); 
 
   const reservationTimers = useRef<{ [productId: number]: NodeJS.Timeout }>({});
 
@@ -81,24 +82,32 @@ const Store: React.FC = () => {
     setEditModalIsOpen(true);
   };
 
-  const handleUpdateProduct = async (e: React.FormEvent) => {
+  const handleUpdateProduct = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!editProduct) return;
-
-    const updatedProduct = { name, description, price, stock };
+  
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('description', description);
+    formData.append('price', price.toString());
+    formData.append('stock', stock.toString());
+    if (image) {
+      formData.append('image', image); // Lägg till bild om användaren valt en ny bild
+    }
+  
     try {
       const response = await fetch(`http://localhost:3001/products/${editProduct.id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedProduct),
+        body: formData,
       });
-
+  
       if (response.ok) {
         const updatedResponse = await fetch('http://localhost:3001/products');
         const updatedData = await updatedResponse.json();
         setProducts(updatedData);
         setEditModalIsOpen(false);
         setEditProduct(null);
+        setImage(null); // Rensa bilden efter uppladdning
       } else {
         console.error('Failed to update product');
       }
@@ -106,21 +115,45 @@ const Store: React.FC = () => {
       console.error('Error updating product:', error);
     }
   };
-
+  
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const productData = { name, description, price, stock };
-
+  
     try {
-      const response = await fetch('http://localhost:3001/products', {
+      // Skapa produkten först
+      const productResponse = await fetch('http://localhost:3001/products', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(productData),
+        body: JSON.stringify({ name, description, price, stock }),
       });
-
-      if (response.ok) {
+  
+      if (productResponse.ok) {
+        const productData = await productResponse.json();
+  
+        // Kontrollera att produktData innehåller ett giltigt productId
+        if (!productData.productId) {
+          console.error("Produkt-ID saknas efter skapandet.");
+          return;
+        }
+  
+        // Ladda upp bilden om den finns
+        if (image) {
+          const formData = new FormData();
+          formData.append('image', image);
+  
+          const imageResponse = await fetch(`http://localhost:3001/products/image/${productData.productId}`, {
+            method: 'POST',
+            body: formData,
+          });
+  
+          if (!imageResponse.ok) {
+            console.error('Failed to upload image');
+          }
+        }
+  
+        // Uppdatera produktlistan och stäng modalen
         const updatedResponse = await fetch('http://localhost:3001/products');
         const updatedData = await updatedResponse.json();
         setProducts(updatedData);
@@ -129,13 +162,23 @@ const Store: React.FC = () => {
         setDescription('');
         setPrice('');
         setStock('');
+        setImage(null); // Rensa bilden
       } else {
-        console.error('Failed to create product:', response.statusText);
+        console.error('Failed to create product:', productResponse.statusText);
       }
     } catch (error) {
       console.error('Error:', error);
     }
   };
+  
+  
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setImage(e.target.files[0]);
+    }
+  };
+  
 
   const handleProductClick = (product: any) => {
     setSelectedProduct(product);
@@ -237,6 +280,7 @@ const Store: React.FC = () => {
             min="0"
             required
           />
+          <input type="file" onChange={handleImageChange} />
           <button type="submit">Skapa produkt</button>
         </form>
         <button onClick={() => setModalIsOpen(false)}>Stäng</button>
@@ -306,6 +350,7 @@ const Store: React.FC = () => {
             required
           />
           <button type="submit">Spara ändringar</button>
+          <input type="file" onChange={handleImageChange} />
         </form>
         <button
           onClick={() => handleDeleteProduct(editProduct.id)}
