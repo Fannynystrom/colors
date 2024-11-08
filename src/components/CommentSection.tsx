@@ -5,6 +5,7 @@ interface Comment {
   id: number;
   productId: number;
   text: string;
+  name: string;  // Nytt fält för namn
 }
 
 interface CommentsSectionProps {
@@ -14,12 +15,13 @@ interface CommentsSectionProps {
 const CommentsSection: React.FC<CommentsSectionProps> = ({ productId }) => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState<string>('');
+  const [name, setName] = useState<string>(''); // Ny state för namn
 
   // hämtar kommentarer när produktId ändras
   useEffect(() => {
     const fetchComments = async () => {
       try {
-        const response = await fetch(`http://localhost:3001/comments/${productId}`);
+        const response = await fetch(`http://localhost:3001/products/${productId}/comments`);
         const data = await response.json();
         setComments(data);
       } catch (error) {
@@ -32,22 +34,24 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ productId }) => {
 
   const handleCommentSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (newComment.trim() !== '') {
+    if (newComment.trim() !== '' && name.trim() !== '') { // Kontrollera att både namn och kommentar har innehåll
       const sanitizedComment = DOMPurify.sanitize(newComment);
+      const sanitizedName = DOMPurify.sanitize(name);
 
       try {
-        const response = await fetch('http://localhost:3001/comments', {
+        const response = await fetch(`http://localhost:3001/products/${productId}/comments`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ productId, text: sanitizedComment }),
+          body: JSON.stringify({ productId, text: sanitizedComment, name: sanitizedName }),
         });
 
         if (response.ok) {
           const newCommentData = await response.json();
           setComments([...comments, newCommentData]); // lägger till ny kommentar till listan
-          setNewComment(''); // rensar input efter att kommentaren har skickats
+          setNewComment(''); // Rensar kommentarinput efter att den skickats
+          setName(''); // Rensar namninput efter att den skickats
         } else {
           console.error('Failed to save comment');
         }
@@ -62,12 +66,22 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ productId }) => {
       <h3>Kommentarer</h3>
       <ul>
         {comments.map((comment, index) => (
-          <li key={comment.id} dangerouslySetInnerHTML={{ __html: comment.text }} />
+          <li key={comment.id}>
+            <strong>{comment.name}:</strong> {/* Visa namn före kommentaren */}
+            <span dangerouslySetInnerHTML={{ __html: comment.text }} />
+          </li>
         ))}
       </ul>
 
       {/* formulär för ny kommentar */}
       <form onSubmit={handleCommentSubmit}>
+        <input
+          type="text"
+          placeholder="Ditt namn"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+        />
         <textarea
           placeholder="Skriv en kommentar..."
           value={newComment}
@@ -75,9 +89,8 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ productId }) => {
           required
         />
         <div className="comment-button-container">
-    <button className="submit-comment-btn">Lägg till kommentar</button>
-</div>
-
+          <button className="submit-comment-btn">Lägg till kommentar</button>
+        </div>
       </form>
     </div>
   );

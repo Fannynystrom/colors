@@ -25,6 +25,40 @@ router.get('/', (req, res) => {
   });
 });
 
+// skapa en ny kommentar 
+router.post('/:productId/comments', (req, res) => {
+    const { productId } = req.params;
+    const { text, name } = req.body;
+  
+    connection.query(
+      'INSERT INTO comments (productId, text, name) VALUES (?, ?, ?)',
+      [productId, text, name],
+      (err, results) => {
+        if (err) {
+          return res.status(500).send('Error saving comment');
+        }
+        res.status(201).json({ id: results.insertId, productId, text, name });
+      }
+    );
+  });
+  
+  // hämta kommentarer för produkt
+  router.get('/:productId/comments', (req, res) => {
+    const { productId } = req.params;
+  
+    connection.query(
+      'SELECT * FROM comments WHERE productId = ?',
+      [productId],
+      (err, results) => {
+        if (err) {
+          return res.status(500).send('Error fetching comments');
+        }
+        res.json(results);
+      }
+    );
+  });
+  
+
 // skapa en ny produkt
 router.post('/', upload.single('image'), async (req, res) => {
     const { name, description, price, stock } = req.body;

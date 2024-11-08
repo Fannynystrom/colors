@@ -134,37 +134,7 @@ app.get('/users', (req, res) => {
   });
 });
 
-// skapa kommentarer
-app.post('/comments', (req, res) => {
-  const { productId, text } = req.body;
 
-  connection.query(
-    'INSERT INTO comments (productId, text) VALUES (?, ?)',
-    [productId, text],
-    (err, results) => {
-      if (err) {
-        return res.status(500).send('Error saving comment');
-      }
-      res.status(201).json({ id: results.insertId, productId, text });
-    }
-  );
-});
-
-// hämta kommentarer
-app.get('/comments/:productId', (req, res) => {
-  const { productId } = req.params;
-
-  connection.query(
-    'SELECT * FROM comments WHERE productId = ?',
-    [productId],
-    (err, results) => {
-      if (err) {
-        return res.status(500).send('Error fetching comments');
-      }
-      res.json(results);
-    }
-  );
-});
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
