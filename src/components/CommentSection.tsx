@@ -5,7 +5,7 @@ interface Comment {
   id: number;
   productId: number;
   text: string;
-  name: string;  // Nytt fält för namn
+  name: string; 
 }
 
 interface CommentsSectionProps {
@@ -15,7 +15,7 @@ interface CommentsSectionProps {
 const CommentsSection: React.FC<CommentsSectionProps> = ({ productId }) => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState<string>('');
-  const [name, setName] = useState<string>(''); // Ny state för namn
+  const [name, setName] = useState<string>(''); 
 
   // hämtar kommentarer när produktId ändras
   useEffect(() => {
@@ -34,7 +34,7 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ productId }) => {
 
   const handleCommentSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (newComment.trim() !== '' && name.trim() !== '') { // Kontrollera att både namn och kommentar har innehåll
+    if (newComment.trim() !== '' && name.trim() !== '') { //kollar att namn o kommentar har innehåll
       const sanitizedComment = DOMPurify.sanitize(newComment);
       const sanitizedName = DOMPurify.sanitize(name);
 
@@ -50,8 +50,8 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ productId }) => {
         if (response.ok) {
           const newCommentData = await response.json();
           setComments([...comments, newCommentData]); // lägger till ny kommentar till listan
-          setNewComment(''); // Rensar kommentarinput efter att den skickats
-          setName(''); // Rensar namninput efter att den skickats
+          setNewComment(''); // rensar kommentarinput efter att den skickats
+          setName(''); // rensar namninput efter att den skickats
         } else {
           console.error('Failed to save comment');
         }
@@ -67,7 +67,7 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ productId }) => {
       <ul>
         {comments.map((comment, index) => (
           <li key={comment.id}>
-            <strong>{comment.name}:</strong> {/* Visa namn före kommentaren */}
+            <strong>{comment.name}:</strong> 
             <span dangerouslySetInnerHTML={{ __html: comment.text }} />
           </li>
         ))}

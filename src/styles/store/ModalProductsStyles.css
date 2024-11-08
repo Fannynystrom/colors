@@ -4,6 +4,8 @@
   left: 50%;
   width: 50%;
   max-width: 600px;
+  max-height: 80vh; 
+  overflow-y: auto; 
   padding: 20px;
   background-color: rgb(240, 237, 237);
   border-radius: 8px;
@@ -93,6 +95,8 @@
 
 /* Kommentarlistan */
 .ViewModal .comments-section ul {
+  display: flex;
+  flex-direction: column; 
   list-style-type: none;
   padding: 0;
   margin: 0;
@@ -106,7 +110,9 @@
   border-radius: 4px;
   background-color: #f9f9f9;
   display: block;
+  word-wrap: break-word; 
 }
+
 
 .ViewModal .comments-section textarea {
   width: 90%;
