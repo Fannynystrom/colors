@@ -5,25 +5,39 @@ import connection from '../db.js';
 
 const router = express.Router();
 
-//  `multer` för bilduppladdning
+// `multer` för bilduppladdning med filbegränsning
 const storage = multer.diskStorage({
-  destination: './uploads/',
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname)); // filnamn med tidsstämpel
-  },
-});
-const upload = multer({ storage });
-
-// hämta alla produkter
-router.get('/', (req, res) => {
-  connection.query('SELECT id, name, description, price, stock, image_url FROM products', (err, results) => {
-    if (err) {
-      console.error('Error fetching products:', err);
-      return res.status(500).json({ error: 'Failed to fetch products' });
-    }
-    res.json(results);
+    destination: './uploads/',
+    filename: (req, file, cb) => {
+      cb(null, Date.now() + path.extname(file.originalname)); // filnamn med tidsstämpel
+    },
   });
-});
+  
+  // filtypkontroll för att endast tillåta png, jpg, och jpeg
+  const fileFilter = (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true); 
+    } else {
+      cb(new Error('Endast PNG, JPG och JPEG-bilder är tillåtna!'), false); 
+    }
+  };
+  
+  const upload = multer({ 
+    storage,
+    fileFilter,
+  });
+  
+  // hämta alla produkter
+  router.get('/', (req, res) => {
+    connection.query('SELECT id, name, description, price, stock, image_url FROM products', (err, results) => {
+      if (err) {
+        console.error('Error fetching products:', err);
+        return res.status(500).json({ error: 'Failed to fetch products' });
+      }
+      res.json(results);
+    });
+  });
 
 // skapa en ny kommentar 
 router.post('/:productId/comments', (req, res) => {
