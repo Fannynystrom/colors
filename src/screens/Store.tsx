@@ -159,24 +159,47 @@ const Store: React.FC = () => {
     }
   };
 
+  // säkerställer att fälten är tomma när admin öppnar för att skapa produkt
+  const openAddProductModal = () => {
+    setName('');
+    setDescription('');
+    setPrice('');
+    setStock('');
+    setModalIsOpen(true);
+  };
+
+  //  rensa fälten i skapa produkt när modalen stängs
+  useEffect(() => {
+    if (!modalIsOpen) {
+      setName('');
+      setDescription('');
+      setPrice('');
+      setStock('');
+    }
+  }, [modalIsOpen]);
+
   return (
     <div className="shop">
-    {/* video-element för rubriken */}
-    <video
-      className="header-video" 
-      src={`${process.env.PUBLIC_URL}/storeheader.mp4`}  
-      autoPlay
-      loop
-      muted
-      style={{ width: '100%', height: 'auto' }}
-    />
+      {/* video-element för rubriken */}
+      <video
+        className="header-video" 
+        src={`${process.env.PUBLIC_URL}/storeheader.mp4`}  
+        autoPlay
+        loop
+        muted
+        style={{ width: '100%', height: 'auto' }}
+      />
       <h1>Butik</h1>
       {isAdmin && (
-        <button onClick={() => setModalIsOpen(true)}>Lägg till produkt</button>
+        <button onClick={openAddProductModal}>Lägg till produkt</button>
       )}
 
       {/* modal för att lägga till produkt */}
-      <Modal isOpen={modalIsOpen} onRequestClose={() => setModalIsOpen(false)} className="admin-add-product-modal">
+      <Modal
+        isOpen={modalIsOpen}
+        onRequestClose={() => setModalIsOpen(false)}
+        className="admin-add-product-modal"
+      >
         <h2>Lägg till produkt</h2>
         <form onSubmit={handleSubmit}>
           <input
@@ -240,7 +263,11 @@ const Store: React.FC = () => {
 
 
       {/* redigeringsmodal admin */}
-      <Modal isOpen={editModalIsOpen} onRequestClose={() => setEditModalIsOpen(false)} className="admin-add-product-modal">
+      <Modal
+        isOpen={editModalIsOpen}
+        onRequestClose={() => setEditModalIsOpen(false)}
+        className="admin-add-product-modal"
+      >
         <h2>Redigera produkt</h2>
         <form onSubmit={handleUpdateProduct}>
           <input
@@ -280,7 +307,10 @@ const Store: React.FC = () => {
           />
           <button type="submit">Spara ändringar</button>
         </form>
-        <button onClick={() => handleDeleteProduct(editProduct.id)} style={{ color: 'red', marginTop: '10px' }}>
+        <button
+          onClick={() => handleDeleteProduct(editProduct.id)}
+          style={{ color: 'red', marginTop: '10px' }}
+        >
           Ta bort produkt
         </button>
         <button onClick={() => setEditModalIsOpen(false)}>Stäng</button>
