@@ -6,6 +6,8 @@ interface Comment {
   productId: number;
   text: string;
   name: string; 
+  created_at: string;
+
 }
 
 interface CommentsSectionProps {
@@ -65,12 +67,16 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ productId }) => {
     <div className="comments-section">
       <h3>Kommentarer</h3>
       <ul>
-        {comments.map((comment, index) => (
-          <li key={comment.id}>
-            <strong>{comment.name}:</strong> 
-            <span dangerouslySetInnerHTML={{ __html: comment.text }} />
-          </li>
-        ))}
+      {comments.map((comment) => (
+  <li key={comment.id}>
+    <p><strong>{comment.name}</strong></p>
+    <p dangerouslySetInnerHTML={{ __html: comment.text }} />
+    <p className="comment-date">
+      <strong>{new Date(comment.created_at).toLocaleString('sv-SE', { dateStyle: 'short', timeStyle: 'short' })}</strong>
+    </p>
+  </li>
+))}
+
       </ul>
 
       {/* formulär för ny kommentar */}

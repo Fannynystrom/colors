@@ -31,23 +31,24 @@ router.post('/:productId/comments', (req, res) => {
     const { text, name } = req.body;
   
     connection.query(
-      'INSERT INTO comments (productId, text, name) VALUES (?, ?, ?)',
+      'INSERT INTO comments (productId, text, name, created_at) VALUES (?, ?, ?, NOW())',
       [productId, text, name],
       (err, results) => {
         if (err) {
           return res.status(500).send('Error saving comment');
         }
-        res.status(201).json({ id: results.insertId, productId, text, name });
+        res.status(201).json({ id: results.insertId, productId, text, name, created_at: new Date() });
       }
     );
   });
   
+  
   // hämta kommentarer för produkt
-  router.get('/:productId/comments', (req, res) => {
+router.get('/:productId/comments', (req, res) => {
     const { productId } = req.params;
   
     connection.query(
-      'SELECT * FROM comments WHERE productId = ?',
+      'SELECT id, productId, text, name, created_at FROM comments WHERE productId = ?',
       [productId],
       (err, results) => {
         if (err) {
@@ -57,6 +58,7 @@ router.post('/:productId/comments', (req, res) => {
       }
     );
   });
+  
   
 
 // skapa en ny produkt
