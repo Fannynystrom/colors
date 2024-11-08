@@ -1,18 +1,14 @@
-// src/components/ProductModal.tsx
-
 import React from 'react';
 import Modal from 'react-modal';
-import { CartItem } from '../context/AuthContext'; 
-import { Product } from '../types/product'; 
-import CommentsSection from './CommentSection'; 
+import CommentsSection from './CommentSection';
 
 interface ProductModalProps {
   isOpen: boolean;
   onRequestClose: () => void;
-  product: Product | null;
-  cartItems: CartItem[];
+  product: any; 
+  cartItems: any[]; 
   handleRemoveFromCart: (productId: number, quantity?: number) => Promise<void>;
-  handleAddToCart: (product: Product) => Promise<void>;
+  handleAddToCart: (product: any) => Promise<void>;
 }
 
 const ProductModal: React.FC<ProductModalProps> = ({
@@ -37,6 +33,16 @@ const ProductModal: React.FC<ProductModalProps> = ({
     >
       {product && (
         <div className="ViewModal"> 
+          {/* Visa produktbilden */}
+          {product.image_url && (
+            <img 
+              src={`http://localhost:3001${product.image_url}`} 
+              alt={product.name} 
+              className="product-image"
+              style={{ width: '100%', borderRadius: '8px', marginBottom: '20px' }} 
+            />
+          )}
+          
           <h2>{product.name}</h2>
           <p>{product.description}</p>
           <p>Pris: {product.price} kr</p>
