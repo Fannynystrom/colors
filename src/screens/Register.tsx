@@ -9,26 +9,43 @@ const Register = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate(); 
 
-  // funktion för att kontrollera lösenordet och om de uppfyller krav
-  const validatePassword = (password: string) => {
+  //  för att kontrollera lösenordet och om de uppfyller kraven
+  const validatePassword = (password: string, username: string) => {
     const symbolPattern = /[!@#$%^&*(),.?":{}|<>]/g;
     const hasTwoSymbols = (password.match(symbolPattern) || []).length >= 2;
-
-    if (password.length >= 15 || (password.length >= 10 && hasTwoSymbols)) {
+  
+    // kontrollerar om lösenordet består av samma tecken repeterat
+    const isRepeatedCharacters = /^(\w)\1*$/.test(password);
+  
+    // kontrollera om lösenordet liknar användarnamnet 
+    const resemblesUsername = password.toLowerCase().includes(username.toLowerCase());
+  
+    // om lösenordet är minst 15 tecken långt, eller minst 10 tecken med två symboler
+    if ((password.length >= 15 || (password.length >= 10 && hasTwoSymbols)) && !isRepeatedCharacters && !resemblesUsername) {
       return true;
     }
-    return false;
+  
+    if (isRepeatedCharacters) {
+      return "Bättre lösenord kan du komma på!"; // om användaren har ett tecken på repeat sätts hen på plats
+    }
+  
+    if (resemblesUsername) {
+      return "Lösenordet får inte likna användarnamnet.";
+    }
+  
+    return "Lösenordet måste vara minst 15 tecken långt, eller minst 10 tecken långt och innehålla minst två symboler.";
   };
-
+  
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // kollar lösenordet innan registrering om de inte uppfyller kraven meddelas detta 
-    if (!validatePassword(password)) {
-      setError('Lösenordet måste vara minst 15 tecken långt, eller minst 10 tecken långt och innehålla minst två symboler.');
+  
+    // validerar lösenordet och hanterar olika meddelanden
+    const validationMessage = validatePassword(password, username);
+    if (validationMessage !== true) {
+      setError(validationMessage); // sätter felmeddelande beroende på valideringsresultat
       return;
     }
-
+  
     try {
       const response = await axios.post('http://localhost:3001/register', {
         username,
@@ -41,6 +58,10 @@ const Register = () => {
       console.error('Registrering misslyckades:', err);
     }
   };
+  
+  
+
+  
 
   return (
     <div className="register-container">

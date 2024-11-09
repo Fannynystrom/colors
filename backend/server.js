@@ -55,7 +55,7 @@ app.post('/login', (req, res) => {
     }
     loginAttempts[username].attempts = 0;
   }
-
+//sql bibloteket sanerar mot injektion, ett extra skydd trots ovan
   connection.query('SELECT * FROM users WHERE username = ?', [username], (err, results) => {
     if (err) {
       logLoginAttempt(username, false, actualIp, userAgent);
@@ -97,20 +97,37 @@ app.post('/login', (req, res) => {
   });
 });
 
+
 // registrering
 app.post('/register', async (req, res) => {
   const { username, password } = req.body;
 
+  // kontrollerar lösenordets styrka
   const symbolPattern = /[!@#$%^&*(),.?":{}|<>]/g;
   const hasTwoSymbols = (password.match(symbolPattern) || []).length >= 2;
 
-  if (password.length < 15 && !(password.length >= 10 && hasTwoSymbols)) {
-    return res.status(400).send('Lösenordet måste vara minst 15 tecken långt, eller minst 10 tecken långt och innehålla minst två symboler.');
+  // kontrollerar om lösenordet är likt användarnamnet
+  const isSimilarToUsername = password.toLowerCase().includes(username.toLowerCase());
+
+  // kontrollera om lösenordet bara är upprepade tecken
+  const isRepeatedCharacters = /^(\w)\1*$/.test(password);
+
+  if (isSimilarToUsername) {
+  }
+
+  // kraven för lösenordslängd och komplexitet
+  if (
+    password.length < 8 || 
+    password.length < 15 && !(password.length >= 10 && hasTwoSymbols) ||
+    isSimilarToUsername || // inte likna användarnamnet
+    isRepeatedCharacters    //  inte bara vara samma tecken repeterat
+  ) {
+    return res.status(400).send('Lösenordet måste vara minst 15 tecken långt, eller minst 10 tecken långt och innehålla minst två symboler, och inte likna användarnamnet eller endast bestå av repeterade tecken.');
   }
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-
+//extra skydd mot injektion med sql bibloteket
     connection.query(
       'INSERT INTO users (username, password, role) VALUES (?, ?, ?)',
       [username, hashedPassword, 'user'],
@@ -118,13 +135,13 @@ app.post('/register', async (req, res) => {
         if (err) {
           return res.status(500).send('Registrering misslyckades.');
         }
-        res.status(201).send('Användare skapad!');
       }
     );
   } catch (err) {
     res.status(500).send('Något gick fel vid registreringen.');
   }
 });
+
 
 // hämtar användare
 app.get('/users', (req, res) => {
