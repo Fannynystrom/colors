@@ -3,15 +3,20 @@ import { Navigate } from 'react-router-dom';
 import { AuthContext } from './context/AuthContext';
 
 interface ProtectedRouteProps {
-  roleRequired: string;
+  roleRequired?: string; 
   children: React.ReactElement;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ roleRequired, children }) => {
   const authContext = useContext(AuthContext);
 
-  if (!authContext?.isAuthenticated || authContext.role !== roleRequired) {
-    // skickas till login om ngt inte stämmer (går inte att ändra url)
+  if (!authContext?.isAuthenticated) {
+    // om användaren inte är inloggad, omdirigerar till login
+    return <Navigate to="/" replace />;
+  }
+
+  if (roleRequired && authContext.role !== roleRequired) {
+    // om rollen inte matchar, omdirigera till startsidan
     return <Navigate to="/" replace />;
   }
 
@@ -19,3 +24,4 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ roleRequired, children 
 };
 
 export default ProtectedRoute;
+
