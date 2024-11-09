@@ -2,10 +2,12 @@ import express from 'express';
 import multer from 'multer';
 import path from 'path';
 import connection from '../db.js';
+import sharp from 'sharp';
+import fs from 'fs';
 
 const router = express.Router();
 
-// `multer` för bilduppladdning med filbegränsning
+// multer för bilduppladdning med filbegränsning
 const storage = multer.diskStorage({
     destination: './uploads/',
     filename: (req, file, cb) => {
@@ -26,7 +28,38 @@ const storage = multer.diskStorage({
   const upload = multer({ 
     storage,
     fileFilter,
+    // begränsar storleken till 5 MB
+    limits: { fileSize: 5 * 1024 * 1024 } 
   });
+  
+  // bildbearbetning med sharp, kontrollerar att bilden är vad den utger sig för att vara
+  const processImage = async (filePath) => {
+    const extension = path.extname(filePath).toLowerCase();
+    const processedPath = filePath.replace(/(\.[\w\d_-]+)$/i, '_processed$1');
+  
+    const image = sharp(filePath).resize({ width: 800 });
+  
+    try {
+        // kollar att filen är en riktig bild innan den sparas i databasen
+        await image.metadata();
+    } catch (error) {
+        // om de inte skulle vara en giltlig bild, raderas den och skickar ett fel
+        fs.unlinkSync(filePath);
+        throw new Error("Invalid image file.");
+    }
+  
+    // Konvertera endast till JPEG om filen inte är PNG
+    if (extension !== '.png') {
+        await image.toFormat('jpeg').jpeg({ quality: 80, force: true }).toFile(processedPath);
+    } else {
+        await image.toFile(processedPath); 
+    }
+  
+    fs.unlinkSync(filePath); // tar bort originalfilen med metadata, sparar lagringsutrymme
+    return processedPath;
+};
+
+  
   
   // hämta alla produkter
   router.get('/', (req, res) => {
@@ -78,16 +111,25 @@ router.get('/:productId/comments', (req, res) => {
 // skapa en ny produkt
 router.post('/', upload.single('image'), async (req, res) => {
     const { name, description, price, stock } = req.body;
-    const image_url = req.file ? `/uploads/${req.file.filename}` : null;
+    let imageUrl = null;
+  
+    if (req.file) {
+      try {
+        imageUrl = await processImage(req.file.path); // Bearbeta bilden
+        imageUrl = imageUrl.replace('uploads/', '/uploads/');
+      } catch (error) {
+        console.error('Bildbehandling misslyckades:', error);
+        return res.status(500).json({ error: 'Fel vid bildbehandling.' });
+      }
+    }
   
     try {
       const [result] = await connection.promise().query(
         'INSERT INTO products (name, description, price, stock, image_url) VALUES (?, ?, ?, ?, ?)',
-        [name, description, price, stock, image_url]
+        [name, description, price, stock, imageUrl]
       );
   
-      // skickar tillbaka produktens ID och bild-URL till frontend
-      res.status(201).json({ message: 'Produkt skapad!', productId: result.insertId, imageUrl: image_url });
+      res.status(201).json({ message: 'Produkt skapad!', productId: result.insertId, imageUrl });
     } catch (err) {
       console.error('Error creating product:', err);
       res.status(500).json({ error: 'Fel vid skapande av produkt.' });
