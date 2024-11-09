@@ -49,7 +49,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           body: JSON.stringify({ amount: item.quantity }),
         });
       } catch (error) {
-        console.error('Error resetting stock for product:', item.id);
+        console.error(`Kunde inte återställa lagret för produkt ID ${item.id}`);
       }
     }
   };
@@ -61,7 +61,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     sessionStorage.removeItem('cartItems');
     sessionStorage.removeItem('cartTotalCount');
     sessionStorage.removeItem('cartTimestamp');
-    console.log('Varukorgen har rensats');
   };
 
   const startCartTimer = (remainingTime: number) => {
@@ -70,7 +69,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     cartTimeoutRef.current = setTimeout(() => {
       clearCart();
-      console.log('Varukorgen har rensats på grund av inaktivitet');
     }, remainingTime);
   };
 
@@ -80,7 +78,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const user = JSON.parse(storedUser);
       setIsAuthenticated(true);
       setRole(user.role);
-      console.log('Användare hittades i sessionStorage');
     }
 
     const storedCartItems = sessionStorage.getItem('cartItems');
@@ -88,7 +85,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const storedCartTimestamp = sessionStorage.getItem('cartTimestamp');
 
     if (storedCartItems && storedCartTotalCount && storedCartTimestamp) {
-      console.log('Laddar varukorgen från sessionStorage');
       const parsedCartItems: CartItem[] = JSON.parse(storedCartItems);
       const parsedCartTotalCount: number = JSON.parse(storedCartTotalCount);
       const cartTimestamp: number = JSON.parse(storedCartTimestamp);
@@ -100,9 +96,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setCartItems(parsedCartItems);
         setCartTotalCount(parsedCartTotalCount);
         startCartTimer(expirationTime - elapsedTime);
-        console.log('Varukorgen laddades och expiration-timer startades');
       } else {
-        console.log('Varukorgen har expirat');
         clearCart();
       }
     }
@@ -112,7 +106,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setRole('');
       sessionStorage.removeItem('user');
       window.location.href = '/';
-      console.log('Användaren loggades ut på grund av inaktivitet');
     };
 
     let inactivityTimer: NodeJS.Timeout = setTimeout(handleLogoutDueToInactivity, 300000); // 5 minuter
@@ -141,7 +134,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       sessionStorage.setItem('cartTotalCount', JSON.stringify(cartTotalCount));
       sessionStorage.setItem('cartTimestamp', JSON.stringify(Date.now()));
       startCartTimer(60000); // 1 minut
-      console.log('Varukorgen har sparats till sessionStorage');
     } else {
       sessionStorage.removeItem('cartItems');
       sessionStorage.removeItem('cartTotalCount');
@@ -149,7 +141,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (cartTimeoutRef.current) {
         clearTimeout(cartTimeoutRef.current);
       }
-      console.log('Varukorgen har rensats från sessionStorage');
     }
   }, [cartItems, cartTotalCount]);
 
@@ -159,7 +150,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const updatedData = await response.json();
       setProducts(updatedData);
     } catch (error) {
-      console.error('Error fetching updated products:', error);
+      console.error('Kunde inte hämta uppdaterade produkter');
     }
   };
 
@@ -167,7 +158,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsAuthenticated(true);
     setRole(userRole);
     sessionStorage.setItem('user', JSON.stringify({ userId, role: userRole }));
-    console.log('Användaren loggades in');
   };
 
   const logout = async () => {
@@ -176,14 +166,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setRole('');
     sessionStorage.removeItem('user');
     clearCart();
-    console.log('Användaren loggades ut');
   };
 
   const addToCart = async (product: Product) => {
-    // beräkna den totala mängden i varukorgen
     const totalCartQuantity = cartItems.reduce((total, item) => total + item.quantity, 0);
-  
-    // om användaren valt fler än fem, visas en varning
     if (totalCartQuantity >= 5) {
       alert("Tyvärr kan du endast välja 5 produkter totalt åt gången.");
       return;
@@ -203,7 +189,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setCartItems(updatedCartItems);
     setCartTotalCount(prev => prev + 1);
   
-    // reservera produkten i backend och uppdatera produkter
     try {
       const response = await fetch(`http://localhost:3001/products/${product.id}/reserve`, {
         method: 'PATCH',
@@ -214,12 +199,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await fetchUpdatedProducts();
       }
     } catch (error) {
-      console.error('Error reserving product:', error);
+      console.error('Kunde inte reservera produkt');
     }
   };
-  
-  
-  
 
   const removeFromCart = async (productId: number, quantity: number = 1) => {
     const existingItem = cartItems.find(item => item.id === productId);
@@ -236,9 +218,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
     setCartItems(updatedCartItems);
     setCartTotalCount(prev => prev - quantity);
-    console.log(`Tog bort ${quantity} av produkt ID ${productId} från varukorgen`);
   
-    // släpp produkten i backend och uppdatera produkter
     try {
       const response = await fetch(`http://localhost:3001/products/${productId}/release`, {
         method: 'PATCH',
@@ -249,10 +229,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await fetchUpdatedProducts();
       }
     } catch (error) {
-      console.error('Error releasing product:', error);
+      console.error('Kunde inte släppa produkten');
     }
   };
-  
 
   return (
     <AuthContext.Provider
