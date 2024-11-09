@@ -38,8 +38,6 @@ const Login = () => {
         password,
       });
   
-      console.log('Inloggad:', response.data);
-  
       if (authContext) {
         authContext.login(response.data.userId, response.data.role); 
       }
@@ -65,8 +63,6 @@ const Login = () => {
   
         setError(errorMessage);
       }
-
-      console.error('Inloggning misslyckades:', err);
     }
   };
   
@@ -100,8 +96,8 @@ const Login = () => {
       </form>
       {error && <p className="error">{error}</p>}
       {remainingTime !== null && remainingTime > 0 && (
-  <p className="error countdown">För många misslyckade försök. Försök igen om {remainingTime} sekunder.</p>
-  )}
+        <p className="error countdown">För många misslyckade försök. Försök igen om {remainingTime} sekunder.</p>
+      )}
       <p>
         Vill du registrera dig? <a href="/register">Klicka här</a>
       </p>
