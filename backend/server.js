@@ -8,7 +8,9 @@ import { logLoginAttempt } from './log.js';
 import productRoutes from './routes/productRoutes.js';
 import jwt from 'jsonwebtoken';
 import { authenticateToken, authorizeRoles } from './authMiddleware.js';
-import adminRoutes from './routes/adminRoutes.js'; // Importera adminrutter
+import adminRoutes from './routes/adminRoutes.js'; 
+import zxcvbn from 'zxcvbn'; 
+
 
 dotenv.config();
 
@@ -119,32 +121,38 @@ app.post('/login', (req, res) => {
 app.post('/register', async (req, res) => {
   const { username, password } = req.body;
 
-  // kollar lösenordets styrka
-  const symbolPattern = /[!@#$%^&*(),.?":{}|<>]/g;
-  const hasTwoSymbols = (password.match(symbolPattern) || []).length >= 2;
+  // kollar om lösenordet är vanligt enligt zxcvbn
+  const passwordEvaluation = zxcvbn(password);
+  const score = passwordEvaluation.score;
 
-  // kollar om lösenordet är likt användarnamnet
-  const isSimilarToUsername = password.toLowerCase().includes(username.toLowerCase());
+  // kollar om lösenordet är vanligt
+  const isCommonPassword = passwordEvaluation.feedback.suggestions.includes("Lägg till ett ord eller två. Ovanliga ord är bättre.");
 
-  // kollar om lösenordet bara är upprepade tecken
-  const isRepeatedCharacters = /^(\w)\1*$/.test(password);
-
-  if (isSimilarToUsername) {
+  // om lösenordet förekommer i zxcvbn, skicka ett specifikt svar och avsluta funktionen 
+  if (isCommonPassword) {
+    return res.status(400).json({
+      message: 'Lösenordet är för vanligt och kan inte användas.',
+      suggestions: passwordEvaluation.feedback.suggestions,
+    });
   }
 
-  // kraven för lösenordslängd och komplexitet
+  //  andra styrkekrav
+  const symbolPattern = /[!@#$%^&*(),.?":{}|<>]/g;
+  const hasTwoSymbols = (password.match(symbolPattern) || []).length >= 2;
+  const isSimilarToUsername = password.toLowerCase().includes(username.toLowerCase());
+  const isRepeatedCharacters = /^(\w)\1*$/.test(password);
+
   if (
     password.length < 8 || 
     (password.length < 15 && !(password.length >= 10 && hasTwoSymbols)) ||
-    isSimilarToUsername || // ej likna användarnamnet
-    isRepeatedCharacters    // ej bara vara samma tecken repeterat
+    isSimilarToUsername || 
+    isRepeatedCharacters
   ) {
     return res.status(400).send('Lösenordet måste vara minst 15 tecken långt, eller minst 10 tecken långt och innehålla minst två symboler, och inte likna användarnamnet eller endast bestå av repeterade tecken.');
   }
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-    // extra skydd mot injektion med SQL-biblioteket
     connection.query(
       'INSERT INTO users (username, password, role) VALUES (?, ?, ?)',
       [username, hashedPassword, 'user'],
@@ -159,6 +167,7 @@ app.post('/register', async (req, res) => {
     res.status(500).send('Något gick fel vid registreringen.');
   }
 });
+
 
 // hämtar användare
 app.get('/users', authenticateToken, authorizeRoles('admin'), (req, res) => {
