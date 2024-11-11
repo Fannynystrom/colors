@@ -1,44 +1,86 @@
+body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* containern runt ALLT dvs sektionen OCH de enskilda*/
+.admin-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  margin-top: 0;
+  padding-top: 1rem;
+}
+
+h1 {
+  text-align: center;
+  margin: 0;
+  margin-bottom: 1.5rem;
+}
+
+/* hela boxen runt båda sektionerna */
+.admin-sections {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: flex-start;
+  width: 90%;
+  max-width: 1200px;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+/* användar-sektionen */
+.user-management {
+  background: #f9f9f9;
+  border-radius: 8px;
+  padding: 1.5rem;
+  width: 35%; 
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+}
+
+/* inloggningsförsök */
+.login-logs {
+  background: #f9f9f9;
+  border-radius: 8px;
+  padding: 1.5rem;
+  width: 65%; 
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+}
+
+/* Tabellstil */
 table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  
-  .login-logs {
-    border: 2px solid blue; 
-    width: 70%;
-  }
+  width: 100%;
+  border-collapse: collapse;
+}
 
-  
-  th, td {
-    padding: 8px;
-    text-align: left;
-    border-bottom: 1px solid #ddd;
-  }
-  
-  th {
-    background-color: #f2f2f2;
-  }
-  
-  td.user-agent {
-    max-width: 300px; 
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  
-  tbody tr:nth-child(even) {
-    background-color: #f9f9f9;
-  }
-  
-  tbody tr:hover {
-    background-color: #e0e0e0;
-  }
-  
+th, td {
+  padding: 8px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+th {
+  background-color: #f2f2f2;
+}
+
+tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+tbody tr:hover {
+  background-color: #e0e0e0;
+}
+
+/* User-agent stil för bättre visning */
+td.user-agent {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 
-  .user-management{
-    width: 50%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
