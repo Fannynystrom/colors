@@ -8,6 +8,7 @@ import CommentsSection from '../components/CommentSection';
 import ProductList from '../components/ProductList';
 import ProductModal from '../components/ProductModal';
 import { FaEdit } from 'react-icons/fa';
+import axiosInstance from '../axiosInstance'; // Importera axiosInstance
 
 Modal.setAppElement('#root');
 
@@ -28,12 +29,12 @@ const Store: React.FC = () => {
 
   const reservationTimers = useRef<{ [productId: number]: NodeJS.Timeout }>({});
 
+  // Funktion för att hämta produkter
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch('http://localhost:3001/products');
-        const data = await response.json();
-        setProducts(data);
+        const response = await axiosInstance.get('/products');
+        setProducts(response.data);
       } catch (error) {
         console.error('Error fetching products:', error);
       }
@@ -92,19 +93,15 @@ const Store: React.FC = () => {
     formData.append('price', price.toString());
     formData.append('stock', stock.toString());
     if (image) {
-      formData.append('image', image); // Bifoga ny bild om den finns
+      formData.append('image', image); 
     }
   
     try {
-      const response = await fetch(`http://localhost:3001/products/${editProduct.id}`, {
-        method: 'PATCH',
-        body: formData,
-      });
+      const response = await axiosInstance.patch(`/products/${editProduct.id}`, formData); 
   
-      if (response.ok) {
-        const updatedResponse = await fetch('http://localhost:3001/products');
-        const updatedData = await updatedResponse.json();
-        setProducts(updatedData);
+      if (response.status === 200) {
+        const updatedResponse = await axiosInstance.get('/products');
+        setProducts(updatedResponse.data);
         setEditModalIsOpen(false);
         setEditProduct(null);
         setImage(null); // Rensa bilden
@@ -115,8 +112,6 @@ const Store: React.FC = () => {
       console.error('Error updating product:', error);
     }
   };
-  
-  
   
   
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -132,16 +127,11 @@ const Store: React.FC = () => {
     }
   
     try {
-      const response = await fetch('http://localhost:3001/products', {
-        method: 'POST',
-        body: formData, 
-      });
+      const response = await axiosInstance.post('/products', formData); 
   
-      if (response.ok) {
-        //rensar alla fält när de skickats och stänger modalen vid skickande
-        const updatedResponse = await fetch('http://localhost:3001/products');
-        const updatedData = await updatedResponse.json();
-        setProducts(updatedData);
+      if (response.status === 201) {
+        const updatedResponse = await axiosInstance.get('/products'); 
+        setProducts(updatedResponse.data);
         setModalIsOpen(false);
         setName('');
         setDescription('');
@@ -157,8 +147,6 @@ const Store: React.FC = () => {
   };
   
   
-  
-
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setImage(e.target.files[0]);
@@ -172,11 +160,9 @@ const Store: React.FC = () => {
 
   const handleDeleteProduct = async (productId: number) => {
     try {
-      const response = await fetch(`http://localhost:3001/products/${productId}`, {
-        method: 'DELETE',
-      });
+      const response = await axiosInstance.delete(`/products/${productId}`); // Använd axiosInstance
 
-      if (response.ok) {
+      if (response.status === 200) {
         setProducts(prevProducts => prevProducts.filter(product => product.id !== productId));
         setEditModalIsOpen(false);
         setEditProduct(null);
@@ -291,7 +277,6 @@ const Store: React.FC = () => {
         handleAddToCart={handleAddToCart}
       />
 
-
       {/* redigeringsmodal admin */}
       <Modal
         isOpen={editModalIsOpen}
@@ -335,7 +320,7 @@ const Store: React.FC = () => {
             min="0"
             required
           />
-                    <input type="file" onChange={handleImageChange} />
+          <input type="file" onChange={handleImageChange} />
 
           <button type="submit">Spara ändringar</button>
         </form>
