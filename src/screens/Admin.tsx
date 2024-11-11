@@ -39,7 +39,6 @@ const Admin = () => {
     const fetchLogs = async () => {
       try {
         const response = await axiosInstance.get('/login-logs');
-        console.log('Inloggningsloggar:', response.data); 
         setLogs(response.data);
       } catch (err: any) {
         setError('Kunde inte hämta inloggningsloggar.');
