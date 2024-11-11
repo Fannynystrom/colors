@@ -1,4 +1,6 @@
 import React, { createContext, useState, useEffect, useRef } from 'react';
+import { jwtDecode } from 'jwt-decode'; 
+import axiosInstance from '../axiosInstance'; 
 
 export interface CartItem {
   id: number;
@@ -15,10 +17,18 @@ interface Product {
   description: string;
 }
 
+//dekodar token
+interface DecodedToken {
+  userId: number;
+  role: string;
+  exp: number;
+}
+
 interface AuthContextType {
   isAuthenticated: boolean;
   role: string;
-  login: (userId: number, userRole: string) => void;
+  token: string | null;
+  login: (token: string) => void;
   logout: () => void;
   cartTotalCount: number;
   cartItems: CartItem[];
@@ -32,6 +42,7 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [role, setRole] = useState<string>('');
+  const [token, setToken] = useState<string | null>(null);
   const [cartTotalCount, setCartTotalCount] = useState<number>(0);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -41,13 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const resetCartStock = async (items: CartItem[]) => {
     for (const item of items) {
       try {
-        await fetch(`http://localhost:3001/products/${item.id}/release`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ amount: item.quantity }),
-        });
+        await axiosInstance.patch(`/products/${item.id}/release`, { amount: item.quantity });
       } catch (error) {
         console.error(`Kunde inte återställa lagret för produkt ID ${item.id}`);
       }
@@ -73,11 +78,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    const storedUser = sessionStorage.getItem('user');
-    if (storedUser) {
-      const user = JSON.parse(storedUser);
-      setIsAuthenticated(true);
-      setRole(user.role);
+    const storedToken = sessionStorage.getItem('token');
+    if (storedToken) {
+      try {
+        const decoded: DecodedToken = jwtDecode(storedToken); 
+        const currentTime = Date.now() / 1000;
+        if (decoded.exp > currentTime) {
+          setIsAuthenticated(true);
+          setRole(decoded.role);
+          setToken(storedToken);
+        } else {
+          sessionStorage.removeItem('token');
+        }
+      } catch (error) {
+        console.error('Ogiltig token.');
+        sessionStorage.removeItem('token');
+      }
     }
 
     const storedCartItems = sessionStorage.getItem('cartItems');
@@ -102,9 +118,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     const handleLogoutDueToInactivity = () => {
-      setIsAuthenticated(false);
-      setRole('');
-      sessionStorage.removeItem('user');
+      logout();
       window.location.href = '/';
     };
 
@@ -146,25 +160,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchUpdatedProducts = async () => {
     try {
-      const response = await fetch('http://localhost:3001/products');
-      const updatedData = await response.json();
+      const response = await axiosInstance.get('/products');
+      const updatedData = response.data;
       setProducts(updatedData);
     } catch (error) {
       console.error('Kunde inte hämta uppdaterade produkter');
     }
   };
 
-  const login = (userId: number, userRole: string) => {
-    setIsAuthenticated(true);
-    setRole(userRole);
-    sessionStorage.setItem('user', JSON.stringify({ userId, role: userRole }));
+  const login = (newToken: string) => {
+    try {
+      const decoded: DecodedToken = jwtDecode(newToken); 
+      setIsAuthenticated(true);
+      setRole(decoded.role);
+      setToken(newToken);
+      sessionStorage.setItem('token', newToken);
+    } catch (error) {
+      console.error('Failed to decode token.');
+    }
   };
 
   const logout = async () => {
     await resetCartStock(cartItems);
     setIsAuthenticated(false);
     setRole('');
-    sessionStorage.removeItem('user');
+    setToken(null);
+    sessionStorage.removeItem('token');
     clearCart();
   };
 
@@ -174,10 +195,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       alert("Tyvärr kan du endast välja 5 produkter totalt åt gången.");
       return;
     }
-  
+
     const existingItem = cartItems.find(item => item.id === product.id);
     let updatedCartItems: CartItem[];
-  
+
     if (existingItem) {
       updatedCartItems = cartItems.map(item =>
         item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
@@ -185,17 +206,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } else {
       updatedCartItems = [...cartItems, { id: product.id, name: product.name, price: product.price, quantity: 1 }];
     }
-  
+
     setCartItems(updatedCartItems);
     setCartTotalCount(prev => prev + 1);
-  
+
     try {
-      const response = await fetch(`http://localhost:3001/products/${product.id}/reserve`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: 1 }),
-      });
-      if (response.ok) {
+      const response = await axiosInstance.patch(`/products/${product.id}/reserve`, { amount: 1 });
+      if (response.status === 200) {
         await fetchUpdatedProducts();
       }
     } catch (error) {
@@ -206,7 +223,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const removeFromCart = async (productId: number, quantity: number = 1) => {
     const existingItem = cartItems.find(item => item.id === productId);
     if (!existingItem) return;
-  
+
     let updatedCartItems: CartItem[];
     if (existingItem.quantity <= quantity) {
       updatedCartItems = cartItems.filter(item => item.id !== productId);
@@ -215,17 +232,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         item.id === productId ? { ...item, quantity: item.quantity - quantity } : item
       );
     }
-  
+
     setCartItems(updatedCartItems);
     setCartTotalCount(prev => prev - quantity);
-  
+
     try {
-      const response = await fetch(`http://localhost:3001/products/${productId}/release`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: quantity }),
-      });
-      if (response.ok) {
+      const response = await axiosInstance.patch(`/products/${productId}/release`, { amount: quantity });
+      if (response.status === 200) {
         await fetchUpdatedProducts();
       }
     } catch (error) {
@@ -238,6 +251,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         isAuthenticated,
         role,
+        token,
         login,
         logout,
         cartTotalCount,

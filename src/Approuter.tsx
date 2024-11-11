@@ -19,7 +19,7 @@ function AppRouter() {
     <Router>
       {isAuthenticated && <Navigation />}
       <Routes>
-        {/* offentlig sida */}
+        {/* offentlig sida (login) */}
         <Route path="/" element={isAuthenticated ? <Hem /> : <Login />} /> 
         <Route path="/register" element={isAuthenticated ? <Hem /> : <Register />} />
 
@@ -41,7 +41,7 @@ function AppRouter() {
           element={<ProtectedRoute><Pay /></ProtectedRoute>} 
         />
 
-        {/*  endast för admin */}
+        {/* endast för admin */}
         <Route 
           path="/admin" 
           element={
@@ -56,5 +56,3 @@ function AppRouter() {
 }
 
 export default AppRouter;
-
-  

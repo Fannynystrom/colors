@@ -1,4 +1,3 @@
-
 import '../styles/NavigationStyles.css';
 import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
@@ -44,7 +43,7 @@ function Navigation() {
       <ul className="auth-links">
         <li>
           {isAuthenticated ? (
-            <Link to="/" onClick={logout}>Logga ut</Link>
+            <button onClick={logout} className="logout-button">Logga ut</button>
           ) : (
             <Link to="/login">Logga in</Link>
           )}

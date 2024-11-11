@@ -3,6 +3,11 @@ table {
     border-collapse: collapse;
   }
   
+  .login-logs {
+    border: 2px solid red; 
+  }
+
+  
   th, td {
     padding: 8px;
     text-align: left;
@@ -28,3 +33,10 @@ table {
     background-color: #e0e0e0;
   }
   
+
+
+  .user-management{
+    width: 50%;
+    display: flex;
+    align-items: center;
+  }

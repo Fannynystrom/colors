@@ -1,5 +1,6 @@
+// src/screens/Login.tsx
 import React, { useState, useContext, useEffect } from 'react';
-import axios, { AxiosError } from 'axios';
+import axios from '../axiosInstance'; // Importera din Axios-instans
 import { useNavigate } from 'react-router-dom';
 import '../styles/LoginStyles.css'; 
 import { AuthContext } from '../context/AuthContext'; 
@@ -33,34 +34,36 @@ const Login = () => {
     e.preventDefault();
   
     try {
-      const response = await axios.post('http://localhost:3001/login', {
+      const response = await axios.post('/login', {
         username,
         password,
       });
-  
+
+      const token = response.data.token;
       if (authContext) {
-        authContext.login(response.data.userId, response.data.role); 
+        authContext.login(token); 
       }
-  
+
       navigate('/about');
       setUsername('');
       setPassword('');
-    } catch (err) {
-      const errorResponse = err as AxiosError<LoginErrorResponse>;
+      setError('');
+      setRemainingTime(null);
+    } catch (err: any) {
+      const errorResponse = err.response?.data as LoginErrorResponse;
       
       if (
-        errorResponse?.response?.status === 429 && 
-        errorResponse.response.data && 
-        typeof errorResponse.response.data === 'object' && 
-        'remainingTime' in errorResponse.response.data
+        err.response?.status === 429 && 
+        errorResponse && 
+        'remainingTime' in errorResponse
       ) {
-        const data = errorResponse.response.data; 
+        const data = errorResponse; 
         setRemainingTime(data.remainingTime ?? 0); // nedräkningstiden från servern
       } else {
-        const errorMessage = typeof errorResponse?.response?.data === 'string'
-          ? errorResponse.response.data
+        const errorMessage = typeof err.response?.data === 'string'
+          ? err.response.data
           : 'Felaktigt användarnamn eller lösenord.';
-  
+
         setError(errorMessage);
       }
     }
