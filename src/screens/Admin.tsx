@@ -68,7 +68,7 @@ const Admin = () => {
 
   return (
     <div className="admin-container">
-      <h1>Admin Dashboard</h1>
+      <h1>Administration</h1>
       {error && <p className="error">{error}</p>}
 
       {/* användare */}

@@ -4,7 +4,8 @@ table {
   }
   
   .login-logs {
-    border: 2px solid red; 
+    border: 2px solid blue; 
+    width: 70%;
   }
 
   
@@ -38,5 +39,6 @@ table {
   .user-management{
     width: 50%;
     display: flex;
+    flex-direction: column;
     align-items: center;
   }
