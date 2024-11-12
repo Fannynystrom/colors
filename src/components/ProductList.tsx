@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaEdit } from 'react-icons/fa';
+import { FaEdit } from 'react-icons/fa'; 
 
 interface ProductListProps {
   products: any[];
@@ -39,30 +39,45 @@ const ProductList: React.FC<ProductListProps> = ({
         {products.map(product => (
           <li key={product.id} onClick={() => handleProductClick(product)}>
             {isAdmin && (
-              <FaEdit onClick={(e) => { e.stopPropagation(); openEditModal(product); }} style={{ cursor: 'pointer', float: 'right', fontSize: '1.3em' }} />
+              <FaEdit 
+                onClick={(e) => { 
+                  e.stopPropagation(); 
+                  openEditModal(product); 
+                }} 
+                style={{ cursor: 'pointer', float: 'right', fontSize: '1.3em' }} 
+              />
             )}
             {/* Visa produktbild om den finns */}
             {product.image_url ? (
-  <img 
-    src={`http://localhost:3001${product.image_url}`} 
-    alt={product.name} 
-    className="product-image" 
-  />
-) : (
-  <p>No image available</p> // Visar en fallback-text om bilden saknas
-)}
+              <img 
+                src={`http://localhost:3001${product.image_url}`} 
+                alt={product.name} 
+                className="product-image" 
+              />
+            ) : (
+              <p>No image available</p> // visar en fallback-text om bilden saknas
+            )}
 
             <h3>{product.name}</h3>
             <p>{product.description}</p>
             <p>Pris: {product.price} kr</p>
             {cartQuantities[product.id] ? (
               <div className="quantity-control">
-                <button onClick={(e) => { e.stopPropagation(); handleRemoveFromCart(product.id, 1); }}>-</button>
+                <button onClick={(e) => { 
+                  e.stopPropagation(); 
+                  handleRemoveFromCart(product.id, 1); 
+                }}>-</button>
                 <span>{cartQuantities[product.id]}</span>
-                <button onClick={(e) => { e.stopPropagation(); handleAddToCart(product); }}>+</button>
+                <button onClick={(e) => { 
+                  e.stopPropagation(); 
+                  handleAddToCart(product); 
+                }}>+</button>
               </div>
             ) : (
-              <button onClick={(e) => { e.stopPropagation(); handleAddToCart(product); }}>Lägg till i varukorg</button>
+              <button onClick={(e) => { 
+                e.stopPropagation(); 
+                handleAddToCart(product); 
+              }}>Lägg till i varukorg</button>
             )}
           </li>
         ))}

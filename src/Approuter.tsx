@@ -26,19 +26,35 @@ function AppRouter() {
         {/* skyddade sidor för inloggade användare */}
         <Route 
           path="/home" 
-          element={<ProtectedRoute><Hem /></ProtectedRoute>} 
+          element={
+            <ProtectedRoute>
+              <Hem />
+            </ProtectedRoute>
+          } 
         />
         <Route 
           path="/store" 
-          element={<ProtectedRoute><Store /></ProtectedRoute>} 
+          element={
+            <ProtectedRoute>
+              <Store />
+            </ProtectedRoute>
+          } 
         />
         <Route 
           path="/about" 
-          element={<ProtectedRoute><About /></ProtectedRoute>} 
+          element={
+            <ProtectedRoute>
+              <About />
+            </ProtectedRoute>
+          } 
         />
         <Route 
           path="/pay" 
-          element={<ProtectedRoute><Pay /></ProtectedRoute>} 
+          element={
+            <ProtectedRoute>
+              <Pay />
+            </ProtectedRoute>
+          } 
         />
 
         {/* endast för admin */}

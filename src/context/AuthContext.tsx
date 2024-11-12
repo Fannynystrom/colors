@@ -1,3 +1,4 @@
+// src/context/AuthContext.tsx
 import React, { createContext, useState, useEffect, useRef } from 'react';
 import { jwtDecode } from 'jwt-decode'; 
 import axiosInstance from '../axiosInstance'; 
@@ -17,16 +18,16 @@ interface Product {
   description: string;
 }
 
-//dekodar token
+// Dekodar token
 interface DecodedToken {
   userId: number;
-  role: string;
+  role: string; // ✔️ **Behåll rollen för admin**
   exp: number;
 }
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  role: string;
+  role: string; 
   token: string | null;
   login: (token: string) => void;
   logout: () => void;
@@ -41,7 +42,7 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [role, setRole] = useState<string>('');
+  const [role, setRole] = useState<string>(''); 
   const [token, setToken] = useState<string | null>(null);
   const [cartTotalCount, setCartTotalCount] = useState<number>(0);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -85,7 +86,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const currentTime = Date.now() / 1000;
         if (decoded.exp > currentTime) {
           setIsAuthenticated(true);
-          setRole(decoded.role);
+          setRole(decoded.role); // ✔️ **Behåll rollen**
           setToken(storedToken);
         } else {
           sessionStorage.removeItem('token');
@@ -172,7 +173,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const decoded: DecodedToken = jwtDecode(newToken); 
       setIsAuthenticated(true);
-      setRole(decoded.role);
+      setRole(decoded.role); 
       setToken(newToken);
       sessionStorage.setItem('token', newToken);
     } catch (error) {
@@ -183,7 +184,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     await resetCartStock(cartItems);
     setIsAuthenticated(false);
-    setRole('');
+    setRole(''); 
     setToken(null);
     sessionStorage.removeItem('token');
     clearCart();

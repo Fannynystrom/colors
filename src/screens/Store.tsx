@@ -1,3 +1,4 @@
+// src/screens/Store.tsx
 import React, { useContext, useEffect, useState, useRef } from 'react';
 import Modal from 'react-modal';
 import { AuthContext } from '../context/AuthContext';
@@ -7,14 +8,14 @@ import '../../src/styles/store/Shop.css';
 import CommentsSection from '../components/CommentSection';
 import ProductList from '../components/ProductList';
 import ProductModal from '../components/ProductModal';
-import { FaEdit } from 'react-icons/fa';
-import axiosInstance from '../axiosInstance'; // Importera axiosInstance
+import { FaEdit } from 'react-icons/fa'; 
+import axiosInstance from '../axiosInstance'; 
 
 Modal.setAppElement('#root');
 
 const Store: React.FC = () => {
   const authContext = useContext(AuthContext);
-  const isAdmin = authContext?.role === 'admin';
+  const isAdmin = authContext?.role === 'admin'; 
 
   const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
   const [name, setName] = useState<string>('');
@@ -29,7 +30,7 @@ const Store: React.FC = () => {
 
   const reservationTimers = useRef<{ [productId: number]: NodeJS.Timeout }>({});
 
-  // Funktion för att hämta produkter
+  //    hämtar produkter
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -43,7 +44,7 @@ const Store: React.FC = () => {
     fetchProducts();
   }, []);
 
-  //  handleAddToCart asynkron
+  // handleAddToCart asynkron
   const handleAddToCart = async (product: any) => {
     if (!authContext) return;
   
@@ -58,7 +59,7 @@ const Store: React.FC = () => {
   
     await authContext.addToCart(product);
   };
-  
+
 
   // handleRemoveFromCart asynkron
   const handleRemoveFromCart = async (productId: number, quantity: number = 1) => {
@@ -113,7 +114,7 @@ const Store: React.FC = () => {
     }
   };
   
-  
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
   
@@ -146,13 +147,13 @@ const Store: React.FC = () => {
     }
   };
   
-  
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setImage(e.target.files[0]);
     }
   };
-  
+
 
   const handleProductClick = (product: any) => {
     setSelectedProduct(product);
@@ -160,7 +161,7 @@ const Store: React.FC = () => {
 
   const handleDeleteProduct = async (productId: number) => {
     try {
-      const response = await axiosInstance.delete(`/products/${productId}`); // Använd axiosInstance
+      const response = await axiosInstance.delete(`/products/${productId}`); // använder axiosInstance
 
       if (response.status === 200) {
         setProducts(prevProducts => prevProducts.filter(product => product.id !== productId));
@@ -183,7 +184,7 @@ const Store: React.FC = () => {
     setModalIsOpen(true);
   };
 
-  //  rensa fälten i skapa produkt när modalen stängs
+  // rensa fälten i skapa produkt när modalen stängs
   useEffect(() => {
     if (!modalIsOpen) {
       setName('');
@@ -260,12 +261,12 @@ const Store: React.FC = () => {
 
       <ProductList
         products={products}
-        isAdmin={isAdmin}
+        isAdmin={isAdmin} 
         cartItems={authContext?.cartItems || []}
         handleProductClick={handleProductClick}
         handleRemoveFromCart={handleRemoveFromCart}
         handleAddToCart={handleAddToCart}
-        openEditModal={openEditModal}
+        openEditModal={openEditModal} 
       />
 
       <ProductModal

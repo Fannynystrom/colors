@@ -21,7 +21,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
 }) => {
   if (!product) return null;
 
-  // Hitta produktens kvantitet i varukorgen
+  // hittar produktens kvantitet i varukorgen
   const cartItem = cartItems.find(item => item.id === product.id);
   const quantity = cartItem ? cartItem.quantity : 0;
 

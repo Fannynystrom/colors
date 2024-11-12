@@ -11,12 +11,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ roleRequired, children 
   const authContext = useContext(AuthContext);
 
   if (!authContext?.isAuthenticated) {
-    // om användaren inte är inloggad, omdirigerar till login
+    // om användaren inte är inloggad, omdirigera till login
     return <Navigate to="/" replace />;
   }
 
   if (roleRequired && authContext.role !== roleRequired) {
-    // om rollen inte matchar, omdirigera till startsidan
+    // om rollen inte matchar, omdirigera till login
     return <Navigate to="/" replace />;
   }
 
@@ -24,4 +24,3 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ roleRequired, children 
 };
 
 export default ProtectedRoute;
-
